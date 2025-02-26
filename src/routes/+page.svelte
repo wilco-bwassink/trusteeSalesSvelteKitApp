@@ -1,5 +1,5 @@
-<h1>Welcome to SvelteKit</h1>
-<p>
+<div id="container">
+<p class="trusteeSalesInfo">
 	Trustee sales are held on the first Tuesday of every month outside the northeast lower level door
 	of the Williamson County Justice Center at 405 MLK Street, Georgetown, Texas.
 	<br />
@@ -58,11 +58,23 @@
 		<div class="map">See the Map</div>
 	</div>
 </div>
+</div>
 
 <style>
+	#container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
 	h2 {
 		text-align: center;
 	}
+
+	/* .trusteeSalesInfo {
+		text-align: center;
+	} */
+
 	.monthAndMap {
 		display: flex;
 		flex-direction: column;
