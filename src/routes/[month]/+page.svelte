@@ -83,4 +83,10 @@
 		flex-direction: column;
 		align-items: center;
 	}
+	table {
+		width: 40vw;
+	}
+	tr:nth-child(even) {
+		background-color: var(--wc-tan-60);
+	}
 </style>
