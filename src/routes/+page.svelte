@@ -1,3 +1,13 @@
+<script lang="ts">
+	import { salesData } from '../stores/sales';
+	import { onDestroy } from 'svelte';
+	import type { SaleRecord } from '../types';
+
+	$: sales = $salesData;
+	const unsubscribe = salesData.subscribe((value) => (sales = value));
+	onDestroy(unsubscribe);
+</script>
+
 <div id="container">
 	<p class="trusteeSalesInfo">
 		Trustee sales are held on the first Tuesday of every month outside the northeast lower level
@@ -8,7 +18,7 @@
 	</p>
 
 	<h2>Trustee Sale Schedules</h2>
-	<div class="monthAndMap">
+	<!-- <div class="monthAndMap">
 		<div class="month" id="jan">
 			<div class="monthLink"><a href="/january">January Notices</a></div>
 			<div class="date">1/7/2025</div>
@@ -69,6 +79,15 @@
 			<div class="date">12/3/2024</div>
 			<div class="map">See the Map</div>
 		</div>
+	</div>-->
+	<div class="monthAndMap">
+		{#each sales as sale}
+			<div class="month">
+				<div class="monthLink"><a href={sale.link}>{sale.month}</a></div>
+				<div class="date">{sale.date}</div>
+				<div class="map">{sale.showMap ? 'See the Map' : 'Coming Soon'}</div>
+			</div>
+		{/each}
 	</div>
 </div>
 
