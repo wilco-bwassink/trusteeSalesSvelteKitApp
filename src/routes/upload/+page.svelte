@@ -49,16 +49,16 @@
 		const form = document.querySelector('form');
 		if (!form) return;
 
-		// Clear only specific inputs (leave the month dropdown untouched)
-		const fileInput = form.querySelector('input[type="file"]');
+		const fileInputEl = form.querySelector('input[type="file"]');
 		const dateInput = form.querySelector('input[type="date"]');
 		const numberInput = form.querySelector('input[type="number"]');
 
-		if (fileInput) fileInput.value = '';
+		if (fileInputEl) fileInputEl.value = '';
 		if (dateInput) dateInput.value = '';
 		if (numberInput) numberInput.value = '1';
 
-		// Clear toast state
+		selectedFiles = []; // 👈 clear preview
+
 		message = '';
 		isError = false;
 	}
@@ -141,6 +141,47 @@
 			}, 5000);
 		}
 	}
+
+	let isDragging = false;
+	let fileInput;
+	let selectedFiles = [];
+
+	// Save dropped files into the file input
+	function handleDrop(event) {
+		isDragging = false;
+
+		const droppedFiles = event.dataTransfer.files;
+
+		const pdfs = Array.from(droppedFiles).filter((file) => file.type === 'application/pdf');
+
+		if (pdfs.length === 0) {
+			alert('Only PDF files are allowed.');
+			return;
+		}
+
+		const dataTransfer = new DataTransfer();
+		pdfs.forEach((file) => dataTransfer.items.add(file));
+
+		fileInput.files = dataTransfer.files;
+		selectedFiles = Array.from(dataTransfer.files); // 👈 update preview list
+	}
+
+	function handleFileSelect(event) {
+		const files = event.target.files;
+		selectedFiles = Array.from(files); // 👈 update preview list
+	}
+
+	function removeFile(index) {
+		selectedFiles.splice(index, 1);
+		selectedFiles = [...selectedFiles]; // trigger reactivity
+
+		// Update the actual input element
+		const dataTransfer = new DataTransfer();
+		selectedFiles.forEach((file) => dataTransfer.items.add(file));
+		if (fileInput) {
+			fileInput.files = dataTransfer.files;
+		}
+	}
 </script>
 
 <div id="container">
@@ -157,10 +198,39 @@
 			</select>
 		</label>
 
-		<label>
+		<!-- <label>
 			Upload PDF(s):
 			<input type="file" name="files" multiple accept="application/pdf" required />
-		</label>
+		</label> -->
+		<div
+			class="dropzone"
+			on:dragover|preventDefault={() => (isDragging = true)}
+			on:dragleave={() => (isDragging = false)}
+			on:drop|preventDefault={handleDrop}
+			class:dragging={isDragging}
+		>
+			<p>Drag & drop PDF files here or click to browse</p>
+			<input
+				bind:this={fileInput}
+				type="file"
+				name="files"
+				accept="application/pdf"
+				multiple
+				required
+				on:change={handleFileSelect}
+			/>
+		</div>
+
+		{#if selectedFiles.length > 0}
+			<ul class="preview-list">
+				{#each selectedFiles as file, i}
+					<li>
+						<span>{file.name}</span>
+						<button type="button" on:click={() => removeFile(i)}>✖</button>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 
 		<label>
 			Date for Filename:
@@ -300,5 +370,63 @@
 		border-radius: 4px;
 		cursor: pointer;
 		font-size: 0.9rem;
+	}
+
+	.dropzone {
+		width: 100%;
+		max-width: 400px;
+		min-height: 120px;
+		border: 2px dashed #ccc;
+		border-radius: 8px;
+		padding: 1.5rem;
+		text-align: center;
+		cursor: pointer;
+		position: relative;
+		transition:
+			border-color 0.2s,
+			background-color 0.2s;
+	}
+
+	.dropzone.dragging {
+		border-color: var(--wc-main);
+		background-color: #f0f8ff;
+	}
+
+	.dropzone input[type='file'] {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	.preview-list {
+		margin-top: 1rem;
+		width: 100%;
+		max-width: 400px;
+		padding-left: 1rem;
+		list-style-type: disc;
+		font-size: 0.95rem;
+		color: #333;
+	}
+
+	.preview-list li {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0.4rem 0.6rem;
+		background: #f9f9f9;
+		border-radius: 4px;
+		margin-bottom: 0.5rem;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	}
+
+	.preview-list button {
+		background: #e74c3c;
+		color: white;
+		border: none;
+		padding: 0.2rem 0.5rem;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 0.85rem;
 	}
 </style>
