@@ -18,63 +18,7 @@
 	</p>
 
 	<h2>Trustee Sale Schedules</h2>
-	<!-- <div class="monthAndMap">
-		<div class="month" id="jan">
-			<div class="monthLink"><a href="/january">January Notices</a></div>
-			<div class="date">1/7/2025</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="feb">
-			<div class="monthLink"><a href="/february">February Notices</a></div>
-			<div class="date">2/4/2025</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="mar">
-			<div class="monthLink"><a href="/march">March Notices</a></div>
-			<div class="date">3/4/2025</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="apr">
-			<div class="monthLink"><a href="/april">April Notices</a></div>
-			<div class="date">4/1/2025</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="may">
-			<div class="monthLink"><a href="/may">May Notices</a></div>
-			<div class="date">5/7/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="jun">
-			<div class="monthLink"><a href="/june">June Notices</a></div>
-			<div class="date">6/4/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="jul">
-			<div class="monthLink"><a href="/july">July Notices</a></div>
-			<div class="date">7/2/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="aug">
-			<div class="monthLink"><a href="/august">August Notices</a></div>
-			<div class="date">8/6/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="sep">
-			<div class="monthLink"><a href="/september">September Notices</a></div>
-			<div class="date">9/2/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="oct">
-			<div class="monthLink"><a href="/october">October Notices</a></div>
-			<div class="date">10/7/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="nov">
-			<div class="monthLink"><a href="/november">November Notices</a></div>
-			<div class="date">11/4/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-		<div class="month" id="dec">
+	<!--<div class="month" id="dec">
 			<div class="monthLink"><a href="/december">December Notices</a></div>
 			<div class="date">12/3/2024</div>
 			<div class="map">See the Map</div>
