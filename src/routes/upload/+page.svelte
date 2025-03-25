@@ -4,6 +4,9 @@
 	let message;
 	let isError = false;
 
+	let selectedMonth = '';
+	let files = [];
+
 	const months = [
 		'January',
 		'February',
@@ -18,6 +21,16 @@
 		'November',
 		'December'
 	];
+
+	$: if (selectedMonth) {
+		fetch(`/list-files/${selectedMonth}`).then(async (res) => {
+			if (res.ok) {
+				files = await res.json();
+			} else {
+				files = [];
+			}
+		});
+	}
 
 	function clearForm() {
 		const form = document.querySelector('form');
@@ -57,7 +70,7 @@
 	>
 		<label>
 			Select Month Folder:
-			<select name="month" required>
+			<select name="month" bind:value={selectedMonth} required>
 				<option value="">Select a month</option>
 				{#each months as month}
 					<option value={month}>{month}</option>
@@ -85,11 +98,29 @@
 			<button type="button" on:click={clearForm}>Clear</button>
 		</div>
 	</form>
-
+	<!-- Toast -->
 	{#if message}
 		<div class={`toast ${isError ? 'error' : 'success'}`}>
 			{message}
 		</div>
+	{/if}
+
+	<!-- List files for selected month -->
+	{#if selectedMonth}
+		<h2>Files in {selectedMonth}:</h2>
+		{#if files.length > 0}
+			<ul>
+				{#each files as file}
+					<li>
+						<a href={`/${selectedMonth}/${file}`} target="_blank" rel="noopener">
+							{file}
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p>No files found in this folder.</p>
+		{/if}
 	{/if}
 </div>
 
