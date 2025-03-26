@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { tick } from 'svelte';
 
 	let message = '';
 	let isError = false;
@@ -13,6 +12,7 @@
 
 	let isDragging = false;
 	let fileInput;
+	let isIndex = false; // 👈 new flag for index checkbox
 
 	const months = [
 		'January',
@@ -50,17 +50,20 @@
 		const fileInputEl = form.querySelector('input[type="file"]');
 		const dateInput = form.querySelector('input[type="date"]');
 		const numberInput = form.querySelector('input[type="number"]');
+		const indexCheckbox = form.querySelector('input[name="isIndex"]');
 
 		if (fileInputEl) fileInputEl.value = '';
 		if (dateInput) dateInput.value = '';
 		if (numberInput) numberInput.value = '1';
+		if (indexCheckbox) indexCheckbox.checked = false;
 
+		isIndex = false;
 		selectedFiles = [];
 		message = '';
 		isError = false;
 	}
 
-	async function handleEnhanceResult(result) {
+	function handleEnhanceResult(result) {
 		console.log('Enhance result:', result);
 
 		if (result.type === 'error') {
@@ -73,21 +76,27 @@
 			isError = false;
 			message = result.data?.message || 'Upload successful.';
 			clearForm();
-			await refreshFileList();
+			refreshFileList();
 		}
 
-		await tick(); // ensures message is flushed before showing toast
-		showToast = true;
+		if (!message) {
+			console.warn('No toast message was set before displaying');
+			message = isError ? 'Something went wrong.' : 'Success';
+		}
 
-		setTimeout(() => {
-			showToast = false;
-			message = '';
-		}, 5000);
+		showToast = false;
+		requestAnimationFrame(() => {
+			showToast = true;
+			setTimeout(() => {
+				message = '';
+				showToast = false;
+			}, 5000);
+		});
 	}
 
 	function handleEnhance() {
 		return async (args) => {
-			await handleEnhanceResult(args.result);
+			handleEnhanceResult(args.result);
 		};
 	}
 
@@ -103,7 +112,7 @@
 
 		if (res.ok) {
 			const result = await res.json();
-			message = result.message;
+			message = result.message || 'File deleted.';
 			isError = false;
 			refreshFileList();
 		} else {
@@ -111,9 +120,7 @@
 			isError = true;
 		}
 
-		await tick();
 		showToast = true;
-
 		setTimeout(() => {
 			message = '';
 			showToast = false;
@@ -187,9 +194,7 @@
 			isError = true;
 		}
 
-		await tick();
 		showToast = true;
-
 		setTimeout(() => {
 			message = '';
 			showToast = false;
@@ -211,15 +216,22 @@
 			</select>
 		</label>
 
-		<label>
-			Date for Filename:
-			<input type="date" name="fileDate" required />
-		</label>
+		<div class="fileDetails">
+			<label>
+				Date for Filename:
+				<input type="date" name="fileDate" id="fileDate" required />
+			</label>
 
-		<label>
-			Start Number (e.g., 1):
-			<input type="number" name="startNumber" min="1" value="1" required />
-		</label>
+			<label>
+				Start Number (e.g., 1):
+				<input type="number" name="startNumber" min="1" value="1" required id="startNumber" />
+			</label>
+
+			<label>
+				<span>Index file</span>
+				<input type="checkbox" name="isIndex" bind:checked={isIndex} />
+			</label>
+		</div>
 		<!-- <label>
 			Upload PDF(s):
 			<input type="file" name="files" multiple accept="application/pdf" required />
@@ -253,7 +265,6 @@
 				{/each}
 			</ul>
 		{/if}
-
 		<div class="button-group">
 			<button type="submit">Upload</button>
 			<button type="button" on:click={clearForm}>Clear</button>
@@ -300,7 +311,7 @@
 							on:click|stopPropagation={() => deleteFile(file)}
 							aria-label={`Delete ${file}`}
 						>
-							🗑️
+							<!-- 🗑️ -->Remove
 						</button>
 					</li>
 				{/each}
@@ -380,6 +391,20 @@
 			opacity: 1;
 		}
 	}
+	.fileDetails {
+		display: flex;
+		gap: 1em;
+
+		#startNumber {
+			width: 50px;
+		}
+
+		& label {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+	}
 
 	.file-grid {
 		display: grid;
@@ -389,34 +414,6 @@
 		padding: 0;
 		width: 100%;
 		max-width: 800px;
-	}
-
-	.file-item {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: #f5f5f5;
-		padding: 0.75rem 1rem;
-		border-radius: 6px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-	}
-
-	.file-item a {
-		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		margin-right: 1rem;
-	}
-
-	.file-item button {
-		background-color: #c0392b;
-		color: white;
-		border: none;
-		padding: 0.3rem 0.6rem;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.9rem;
 	}
 
 	.dropzone {
@@ -522,8 +519,10 @@
 	}
 
 	.file-card.selected {
-		border-color: #0077cc;
-		background-color: #eef6ff;
+		/* border-color: #0077cc; */
+		border-color: var(--wc-main);
+		/* background-color: #eef6ff; */
+		background-color: var(--wc-light_blue-60);
 	}
 
 	.file-content {
@@ -541,7 +540,7 @@
 	}
 
 	.delete-button {
-		align-self: flex-end;
+		/* align-self: flex-end; */
 		margin-top: 0.5rem;
 		background-color: #c0392b;
 		color: white;

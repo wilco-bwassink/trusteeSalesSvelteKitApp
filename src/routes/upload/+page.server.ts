@@ -1,5 +1,5 @@
 import type { Actions } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { json, error, fail } from '@sveltejs/kit';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -10,6 +10,7 @@ export const actions: Actions = {
 		const files = form.getAll('files');
 		const fileDate = form.get('fileDate')?.toString();
 		const startNumber = parseInt(form.get('startNumber')?.toString() || '1');
+		const isIndex = form.get('isIndex') === 'on'; // 👈 checkbox sends "on" if checked
 
 		if (!month || !fileDate || files.length === 0) {
 			return fail(400, { message: 'Month, date, and files are required.' });
@@ -33,7 +34,6 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid month selected.' });
 		}
 
-		// Format date as MM-DD-YYYY
 		const parsedDate = new Date(fileDate);
 		if (isNaN(parsedDate.getTime())) {
 			return fail(400, { message: 'Invalid date format.' });
@@ -50,24 +50,26 @@ export const actions: Actions = {
 
 		for (const file of files) {
 			if (!(file instanceof File)) continue;
-
 			if (file.type !== 'application/pdf') {
 				return fail(400, { message: `Only PDF files are allowed. "${file.name}" is not a PDF.` });
 			}
 
 			const buffer = Buffer.from(await file.arrayBuffer());
 
-			// Rename logic
-			const countStr = String(count).padStart(3, '0');
-			const newName = `${formattedDate}_File_${countStr}.pdf`;
-			const filePath = path.join(uploadDir, newName);
+			// 👇 Rename logic based on index mode
+			const newName = isIndex
+				? `${formattedDate}_IDX.pdf`
+				: `${formattedDate}_File_${String(count).padStart(3, '0')}.pdf`;
 
+			const filePath = path.join(uploadDir, newName);
 			await writeFile(filePath, buffer);
-			count++;
+
+			if (!isIndex) count++; // 👈 skip counting if it's an index file
 		}
 
+		const label = isIndex ? 'index file' : `${files.length} file(s)`;
 		return {
-			message: `Uploaded ${files.length} file(s) to ${month}/ with renamed format.`
+			message: `Uploaded ${label} to ${month}/ with renamed format.`
 		};
 	}
 };
