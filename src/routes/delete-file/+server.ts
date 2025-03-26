@@ -4,20 +4,24 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export const POST: RequestHandler = async ({ request }) => {
-	const data = await request.json();
-	const { month, filename } = data;
+	const { month, filename, filenames } = await request.json();
 
-	if (!month || !filename) {
-		throw error(400, 'Month and filename are required.');
+	if (!month || (!filename && !filenames)) {
+		throw error(400, 'Month and at least one filename are required.');
 	}
 
-	const filePath = path.resolve('static', month, filename);
+	const filesToDelete = filenames ?? [filename];
+	const deleted: string[] = [];
 
-	try {
-		await fs.unlink(filePath);
-		return json({ success: true, message: `Deleted ${filename}` });
-	} catch (err) {
-		console.error('Delete error:', err);
-		throw error(500, 'Failed to delete file.');
+	for (const file of filesToDelete) {
+		const filePath = path.resolve('static', month, file);
+		try {
+			await fs.unlink(filePath);
+			deleted.push(file);
+		} catch (err) {
+			console.error(`Error deleting ${file}:`, err);
+		}
 	}
+
+	return json({ success: true, message: `Deleted ${deleted.length} file(s)` });
 };

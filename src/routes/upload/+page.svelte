@@ -1,12 +1,18 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { tick } from 'svelte';
 
 	let message = '';
 	let isError = false;
+	let showToast = false;
 
 	let selectedMonth = '';
 	let files = [];
-	let showToast = false;
+	let selectedFiles = [];
+	let selectedForDeletion = new Set();
+
+	let isDragging = false;
+	let fileInput;
 
 	const months = [
 		'January',
@@ -23,28 +29,20 @@
 		'December'
 	];
 
-	// Fetch files for selected month
 	$: if (selectedMonth) {
 		refreshFileList();
 	}
 
-	// Reusable fetch function
 	async function refreshFileList() {
 		if (!selectedMonth) return;
-
 		try {
 			const res = await fetch(`/list-files/${selectedMonth}`);
-			if (res.ok) {
-				files = await res.json();
-			} else {
-				files = [];
-			}
+			files = res.ok ? await res.json() : [];
 		} catch {
 			files = [];
 		}
 	}
 
-	// Clear form inputs and message
 	function clearForm() {
 		const form = document.querySelector('form');
 		if (!form) return;
@@ -57,13 +55,12 @@
 		if (dateInput) dateInput.value = '';
 		if (numberInput) numberInput.value = '1';
 
-		selectedFiles = []; // 👈 clear preview
-
+		selectedFiles = [];
 		message = '';
 		isError = false;
 	}
 
-	function handleEnhanceResult(result) {
+	async function handleEnhanceResult(result) {
 		console.log('Enhance result:', result);
 
 		if (result.type === 'error') {
@@ -76,35 +73,21 @@
 			isError = false;
 			message = result.data?.message || 'Upload successful.';
 			clearForm();
-			refreshFileList();
+			await refreshFileList();
 		}
 
-		// Delay both assignments to sync DOM render
-		showToast = false;
+		await tick(); // ensures message is flushed before showing toast
+		showToast = true;
 
-		requestAnimationFrame(() => {
-			// Assign message and showToast in sync
-			if (result.type === 'error') {
-				message = result.error?.message || 'Upload failed.';
-			} else if (result.type === 'failure') {
-				message = result.data?.message || 'Upload failed.';
-			} else {
-				message = result.data?.message || 'Upload successful.';
-			}
-			showToast = true;
-
-			// Clear message + toast after 5 seconds
-			setTimeout(() => {
-				message = '';
-				showToast = false;
-			}, 5000);
-		});
+		setTimeout(() => {
+			showToast = false;
+			message = '';
+		}, 5000);
 	}
 
-	// Handle form submission results
 	function handleEnhance() {
 		return async (args) => {
-			handleEnhanceResult(args.result);
+			await handleEnhanceResult(args.result);
 		};
 	}
 
@@ -120,38 +103,26 @@
 
 		if (res.ok) {
 			const result = await res.json();
-			console.log(result.message);
-			refreshFileList();
 			message = result.message;
 			isError = false;
-			showToast = true;
-
-			setTimeout(() => {
-				message = '';
-				showToast = false;
-			}, 5000);
+			refreshFileList();
 		} else {
 			message = 'Failed to delete file.';
 			isError = true;
-			showToast = true;
-
-			setTimeout(() => {
-				message = '';
-				showToast = false;
-			}, 5000);
 		}
+
+		await tick();
+		showToast = true;
+
+		setTimeout(() => {
+			message = '';
+			showToast = false;
+		}, 5000);
 	}
 
-	let isDragging = false;
-	let fileInput;
-	let selectedFiles = [];
-
-	// Save dropped files into the file input
 	function handleDrop(event) {
 		isDragging = false;
-
 		const droppedFiles = event.dataTransfer.files;
-
 		const pdfs = Array.from(droppedFiles).filter((file) => file.type === 'application/pdf');
 
 		if (pdfs.length === 0) {
@@ -161,26 +132,68 @@
 
 		const dataTransfer = new DataTransfer();
 		pdfs.forEach((file) => dataTransfer.items.add(file));
-
 		fileInput.files = dataTransfer.files;
-		selectedFiles = Array.from(dataTransfer.files); // 👈 update preview list
+		selectedFiles = Array.from(dataTransfer.files);
 	}
 
 	function handleFileSelect(event) {
-		const files = event.target.files;
-		selectedFiles = Array.from(files); // 👈 update preview list
+		selectedFiles = Array.from(event.target.files);
 	}
 
 	function removeFile(index) {
 		selectedFiles.splice(index, 1);
-		selectedFiles = [...selectedFiles]; // trigger reactivity
+		selectedFiles = [...selectedFiles];
 
-		// Update the actual input element
 		const dataTransfer = new DataTransfer();
 		selectedFiles.forEach((file) => dataTransfer.items.add(file));
 		if (fileInput) {
 			fileInput.files = dataTransfer.files;
 		}
+	}
+
+	function toggleFileSelection(file) {
+		if (selectedForDeletion.has(file)) {
+			selectedForDeletion.delete(file);
+		} else {
+			selectedForDeletion.add(file);
+		}
+		selectedForDeletion = new Set(selectedForDeletion);
+	}
+
+	function clearSelectedFiles() {
+		selectedForDeletion = new Set();
+	}
+
+	async function deleteSelectedFiles() {
+		const confirmDelete = confirm(`Delete ${selectedForDeletion.size} selected file(s)?`);
+		if (!confirmDelete) return;
+
+		const filenames = Array.from(selectedForDeletion);
+
+		const res = await fetch('/delete-file', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ month: selectedMonth, filenames })
+		});
+
+		if (res.ok) {
+			const result = await res.json();
+			message = result.message || `Deleted ${filenames.length} file(s).`;
+			isError = false;
+			selectedForDeletion = new Set();
+			refreshFileList();
+		} else {
+			message = 'Bulk delete failed.';
+			isError = true;
+		}
+
+		await tick();
+		showToast = true;
+
+		setTimeout(() => {
+			message = '';
+			showToast = false;
+		}, 5000);
 	}
 </script>
 
@@ -198,6 +211,15 @@
 			</select>
 		</label>
 
+		<label>
+			Date for Filename:
+			<input type="date" name="fileDate" required />
+		</label>
+
+		<label>
+			Start Number (e.g., 1):
+			<input type="number" name="startNumber" min="1" value="1" required />
+		</label>
 		<!-- <label>
 			Upload PDF(s):
 			<input type="file" name="files" multiple accept="application/pdf" required />
@@ -232,16 +254,6 @@
 			</ul>
 		{/if}
 
-		<label>
-			Date for Filename:
-			<input type="date" name="fileDate" required />
-		</label>
-
-		<label>
-			Start Number (e.g., 1):
-			<input type="number" name="startNumber" min="1" value="1" required />
-		</label>
-
 		<div class="button-group">
 			<button type="submit">Upload</button>
 			<button type="button" on:click={clearForm}>Clear</button>
@@ -259,14 +271,49 @@
 		{#if files.length > 0}
 			<ul class="file-grid">
 				{#each files as file}
-					<li class="file-item">
-						<a href={`/${selectedMonth.toLowerCase()}/${file}`} target="_blank" rel="noopener"
-							>{file}</a
+					<li
+						class="file-card"
+						class:selected={selectedForDeletion.has(file)}
+						role="checkbox"
+						aria-checked={selectedForDeletion.has(file)}
+						tabindex="0"
+						on:click={() => toggleFileSelection(file)}
+						on:keydown={(e) =>
+							e.key === 'Enter' || e.key === ' ' ? toggleFileSelection(file) : null}
+					>
+						<div class="file-content">
+							<p class="file-name" aria-label={`File name: ${file}`}>{file}</p>
+							<a
+								href={`/${selectedMonth.toLowerCase()}/${file}`}
+								target="_blank"
+								rel="noopener"
+								on:click|stopPropagation
+								aria-label={`View ${file}`}
+							>
+								View
+							</a>
+						</div>
+
+						<button
+							class="delete-button"
+							type="button"
+							on:click|stopPropagation={() => deleteFile(file)}
+							aria-label={`Delete ${file}`}
 						>
-						<button on:click={() => deleteFile(file)}>🗑️</button>
+							🗑️
+						</button>
 					</li>
 				{/each}
 			</ul>
+
+			{#if selectedForDeletion.size > 0}
+				<div class="bulk-delete-bar">
+					<button on:click={deleteSelectedFiles}
+						>Delete Selected ({selectedForDeletion.size})</button
+					>
+					<button on:click={clearSelectedFiles}>Cancel</button>
+				</div>
+			{/if}
 		{:else}
 			<p>No files found in this folder.</p>
 		{/if}
@@ -428,5 +475,79 @@
 		border-radius: 4px;
 		cursor: pointer;
 		font-size: 0.85rem;
+	}
+
+	.bulk-delete-bar {
+		margin-top: 1rem;
+		display: flex;
+		gap: 1rem;
+	}
+
+	.bulk-delete-bar button {
+		background-color: #c0392b;
+		color: white;
+		border: none;
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	.file-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+		gap: 1rem;
+		list-style: none;
+		padding: 0;
+		width: 100%;
+		max-width: 800px;
+	}
+
+	.file-card {
+		cursor: pointer;
+		background: #f9f9f9;
+		padding: 1rem;
+		border-radius: 8px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		border: 2px solid transparent;
+		transition:
+			border 0.2s,
+			background 0.2s;
+	}
+
+	.file-card:hover {
+		border-color: #ddd;
+	}
+
+	.file-card.selected {
+		border-color: #0077cc;
+		background-color: #eef6ff;
+	}
+
+	.file-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.file-name {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.delete-button {
+		align-self: flex-end;
+		margin-top: 0.5rem;
+		background-color: #c0392b;
+		color: white;
+		border: none;
+		padding: 0.4rem 0.6rem;
+		border-radius: 4px;
+		cursor: pointer;
 	}
 </style>
