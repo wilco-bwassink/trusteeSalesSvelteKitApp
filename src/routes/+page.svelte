@@ -29,7 +29,11 @@
 			<div class="month">
 				<div class="monthLink"><a href={sale.link}>{sale.month}</a></div>
 				<div class="date">{sale.date}</div>
-				<div class="map">{sale.showMap ? 'See the Map' : 'Coming Soon'}</div>
+				{#if sale.showMap && sale.mapUrl}
+					<a href={sale.mapUrl} target="_blank" rel="noopener noreferrer">See the Map</a>
+				{:else}
+					<span>Coming Soon</span>
+				{/if}
 			</div>
 		{/each}
 	</div>
