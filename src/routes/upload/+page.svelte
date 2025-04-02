@@ -202,6 +202,9 @@
 	}
 </script>
 
+<nav>
+	<a href="/upload">Upload</a> | <a href="/admin">Admin</a>
+</nav>
 <div id="container">
 	<h1>Trustee Sale Upload</h1>
 
@@ -332,6 +335,11 @@
 </div>
 
 <style>
+	nav {
+		display: flex;
+		justify-content: end;
+		gap: 0.5em;
+	}
 	#container {
 		display: flex;
 		flex-direction: column;

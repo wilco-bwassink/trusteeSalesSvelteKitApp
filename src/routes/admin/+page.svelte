@@ -42,6 +42,9 @@
 	}
 </script>
 
+<nav>
+	<a href="/upload">Upload</a> | <a href="/admin">Admin</a>
+</nav>
 <div id="container">
 	<h2>Admin Panel</h2>
 	{#if showToast}
@@ -85,6 +88,11 @@
 </div>
 
 <style>
+	nav {
+		display: flex;
+		justify-content: end;
+		gap: 0.5em;
+	}
 	#container {
 		display: flex;
 		flex-direction: column;
