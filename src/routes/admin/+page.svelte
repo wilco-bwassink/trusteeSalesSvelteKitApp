@@ -60,7 +60,7 @@
 			{#each sales as sale, index}
 				<tr>
 					<td>{sale.month}</td>
-					<td>
+					<td class="date">
 						<input type="text" value={sale.date} on:input={(e) => updateDate(index, e)} />
 					</td>
 					<td>
@@ -71,7 +71,7 @@
 							placeholder="Map URL"
 						/>
 					</td>
-					<td>
+					<td class="map">
 						<button on:click={() => toggleMap(index)}>
 							{sale.showMap ? 'Hide Map' : 'Show Map'}
 						</button>
@@ -102,6 +102,13 @@
 	th {
 		background: #f4f4f4;
 		font-weight: bold;
+	}
+
+	.date {
+		width: 100px;
+	}
+	.map {
+		text-align: center;
 	}
 	input {
 		width: 100%;
