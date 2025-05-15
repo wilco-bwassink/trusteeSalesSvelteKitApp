@@ -6,6 +6,8 @@
 	$: sales = $salesData;
 	const unsubscribe = salesData.subscribe((value) => (sales = value));
 	onDestroy(unsubscribe);
+
+	export let data: { sales: SaleRecord[] };
 </script>
 
 <div id="container">
