@@ -1,13 +1,16 @@
-<script lang="ts">
-	import { salesData } from '../stores/sales';
-	import { onDestroy } from 'svelte';
-	import type { SaleRecord } from '../types';
+<script>
+	// If you want to hydrate a store, you can uncomment these:
+	// import { salesData } from '../stores/sales';
+	// import { get } from 'svelte/store';
 
-	$: sales = $salesData;
-	const unsubscribe = salesData.subscribe((value) => (sales = value));
-	onDestroy(unsubscribe);
+	// Get `data.sales` from load()
+	export let data;
 
-	export let data: { sales: SaleRecord[] };
+	// Use the passed-in sales list
+	let sales = data.sales;
+
+	// If you prefer to get sales from a store:
+	// let sales = get(salesData);
 </script>
 
 <div id="container">
@@ -20,12 +23,7 @@
 	</p>
 
 	<h2>Trustee Sale Schedules</h2>
-	<!--<div class="month" id="dec">
-			<div class="monthLink"><a href="/december">December Notices</a></div>
-			<div class="date">12/3/2024</div>
-			<div class="map">See the Map</div>
-		</div>
-	</div>-->
+
 	<div class="monthAndMap">
 		{#each sales as sale}
 			<div class="month">
@@ -52,32 +50,21 @@
 		text-align: center;
 	}
 
-	/* .trusteeSalesInfo {
-		text-align: center;
-	} */
-
 	.monthAndMap {
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		/* width: 25vw; */
 		width: 40vw;
 	}
 
-	/* .month {
-		display: flex;
-		flex-direction: row;
-		gap: 1em;
-		justify-content: space-between;
-	} */
 	.month {
 		display: grid;
-		/* grid-template-columns: auto auto auto; */
 		grid-template-columns: repeat(3, 33% [col-start]);
 		flex-direction: row;
 		gap: 1em;
 		justify-content: space-between;
 	}
+
 	.month:nth-child(even) {
 		background-color: var(--wc-tan-60);
 	}
