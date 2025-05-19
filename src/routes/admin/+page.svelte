@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { salesData } from '../../stores/sales';
 	import { onDestroy } from 'svelte';
+	import { base } from '$app/paths';
 
 	let sales = [];
 	let showToast = false;
@@ -43,7 +44,7 @@
 </script>
 
 <nav>
-	<a href="/upload">Upload</a> | <a href="/admin">Admin</a>
+	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
 </nav>
 <div id="container">
 	<h2>Admin Panel</h2>
