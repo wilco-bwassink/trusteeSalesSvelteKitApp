@@ -37,7 +37,7 @@
 	async function refreshFileList() {
 		if (!selectedMonth) return;
 		try {
-			const res = await fetch(`/list-files/${selectedMonth}`);
+			const res = await fetch(`${base}/list-files/${selectedMonth}`);
 			files = res.ok ? await res.json() : [];
 		} catch {
 			files = [];
@@ -299,7 +299,7 @@
 						<div class="file-content">
 							<p class="file-name" aria-label={`File name: ${file}`}>{file}</p>
 							<a
-								href={`/${selectedMonth.toLowerCase()}/${file}`}
+								href={`${base}/${selectedMonth.toLowerCase()}/${file}`}
 								target="_blank"
 								rel="noopener"
 								on:click|stopPropagation
