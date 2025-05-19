@@ -2,6 +2,7 @@
 	// If you want to hydrate a store, you can uncomment these:
 	// import { salesData } from '../stores/sales';
 	// import { get } from 'svelte/store';
+	import { base } from '$app/paths';
 
 	// Get `data.sales` from load()
 	export let data;
@@ -27,10 +28,10 @@
 	<div class="monthAndMap">
 		{#each sales as sale}
 			<div class="month">
-				<div class="monthLink"><a href={sale.link}>{sale.month}</a></div>
+				<div class="monthLink"><a href={`${base}${sale.link}`}>{sale.month}</a></div>
 				<div class="date">{sale.date}</div>
 				{#if sale.showMap && sale.mapUrl}
-					<a href={`/map/${sale.month}`}>See the Map</a>
+					<a href={`${base}/map/${sale.month}`}>See the Map</a>
 				{:else}
 					<span>Coming Soon</span>
 				{/if}
