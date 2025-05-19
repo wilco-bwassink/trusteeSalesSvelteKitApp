@@ -29,7 +29,7 @@
 	}
 </script>
 
-<a href="/">Back to Months</a>
+<a href={`${base}`}>Back to Months</a>
 <div id="container">
 	<h1>Files for {month.charAt(0).toUpperCase() + month.slice(1)}</h1>
 	<p>
