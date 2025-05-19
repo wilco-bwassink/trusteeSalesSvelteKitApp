@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { base } from '$app/paths';
 
 	let files = [];
 	let month = '';
@@ -10,7 +11,7 @@
 
 	onMount(async () => {
 		try {
-			const response = await fetch(`/api/files/${month}`);
+			const response = await fetch(`${base}/api/files/${month}`);
 			if (!response.ok) throw new Error('Failed to fetch files');
 
 			const data = await response.json();
