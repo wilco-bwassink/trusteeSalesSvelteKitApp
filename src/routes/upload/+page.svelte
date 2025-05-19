@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { base } from '$app/paths';
 
 	let message = '';
 	let isError = false;
@@ -203,7 +204,7 @@
 </script>
 
 <nav>
-	<a href="/upload">Upload</a> | <a href="/admin">Admin</a>
+	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
 </nav>
 <div id="container">
 	<h1>Trustee Sale Upload</h1>
