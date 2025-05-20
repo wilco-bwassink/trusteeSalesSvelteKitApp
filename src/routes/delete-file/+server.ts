@@ -15,6 +15,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	for (const file of filesToDelete) {
 		const filePath = path.resolve('static', month, file);
+		console.log('Resolved path to delete:', filePath);
+
 		try {
 			await fs.unlink(filePath);
 			deleted.push(file);
@@ -22,6 +24,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			console.error(`Error deleting ${file}:`, err);
 		}
 	}
+
+	console.log('Incoming delete request:', { month, filename });
 
 	return json({ success: true, message: `Deleted ${deleted.length} file(s)` });
 };
