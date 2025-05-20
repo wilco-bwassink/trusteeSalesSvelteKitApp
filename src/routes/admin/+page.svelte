@@ -33,7 +33,7 @@
 	}
 
 	async function saveToFile() {
-		await fetch('/api/sales', {
+		await fetch(`${base}/api/sales`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(sales)
