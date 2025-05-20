@@ -105,7 +105,7 @@
 		const confirmDelete = confirm(`Are you sure you want to delete "${filename}"?`);
 		if (!confirmDelete) return;
 
-		const res = await fetch('/delete-file', {
+		const res = await fetch(`${base}/delete-file`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ month: selectedMonth, filename })
@@ -178,7 +178,7 @@
 
 		const filenames = Array.from(selectedForDeletion);
 
-		const res = await fetch('/delete-file', {
+		const res = await fetch(`${base}/delete-file`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ month: selectedMonth, filenames })
@@ -242,6 +242,8 @@
 		</label> -->
 		<div
 			class="dropzone"
+			role="region"
+			aria-label="PDF file drop area"
 			on:dragover|preventDefault={() => (isDragging = true)}
 			on:dragleave={() => (isDragging = false)}
 			on:drop|preventDefault={handleDrop}
