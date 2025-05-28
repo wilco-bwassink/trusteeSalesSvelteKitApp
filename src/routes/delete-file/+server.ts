@@ -3,6 +3,7 @@ import { error, json } from '@sveltejs/kit';
 import fs from 'fs/promises';
 import path from 'path';
 
+console.log('Delete Endpoint Hit');
 export const POST: RequestHandler = async ({ request }) => {
 	const { month, filename, filenames } = await request.json();
 
