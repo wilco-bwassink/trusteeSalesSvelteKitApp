@@ -2,18 +2,18 @@
 	import { enhance } from '$app/forms';
 	import { base } from '$app/paths';
 
-	let message = '';
-	let isError = false;
-	let showToast = false;
+	let message: string = '';
+	let isError: boolean = false;
+	let showToast: boolean = false;
 
-	let selectedMonth = '';
-	let files = [];
-	let selectedFiles = [];
-	let selectedForDeletion = new Set();
+	let selectedMonth: string = '';
+	let files: string[] = [];
+	let selectedFiles: File[] = [];
+	let selectedForDeletion: Set<string> = new Set();
 
-	let isDragging = false;
-	let fileInput;
-	let isIndex = false; // 👈 new flag for index checkbox
+	let isDragging: boolean = false;
+	let fileInput: HTMLInputElement;
+	let isIndex: boolean = false; 
 
 	const months = [
 		'January',
@@ -48,10 +48,10 @@
 		const form = document.querySelector('form');
 		if (!form) return;
 
-		const fileInputEl = form.querySelector('input[type="file"]');
-		const dateInput = form.querySelector('input[type="date"]');
-		const numberInput = form.querySelector('input[type="number"]');
-		const indexCheckbox = form.querySelector('input[name="isIndex"]');
+		const fileInputEl = form.querySelector('input[type="file"]') as HTMLInputElement | null;
+		const dateInput = form.querySelector('input[type="date"]') as HTMLInputElement | null;
+		const numberInput = form.querySelector('input[type="number"]') as HTMLInputElement | null;
+		const indexCheckbox = form.querySelector('input[name="isIndex"]') as HTMLInputElement | null;
 
 		if (fileInputEl) fileInputEl.value = '';
 		if (dateInput) dateInput.value = '';
@@ -64,7 +64,7 @@
 		isError = false;
 	}
 
-	function handleEnhanceResult(result) {
+	function handleEnhanceResult(result: { type: string; data?: any; error?: any}) {
 		console.log('Enhance result:', result);
 
 		if (result.type === 'error') {
@@ -96,12 +96,12 @@
 	}
 
 	function handleEnhance() {
-		return async (args) => {
+		return async (args: { result: any}) => {
 			handleEnhanceResult(args.result);
 		};
 	}
 
-	async function deleteFile(filename) {
+	async function deleteFile(filename: string) {
 		const confirmDelete = confirm(`Are you sure you want to delete "${filename}"?`);
 		if (!confirmDelete) return;
 
@@ -128,10 +128,11 @@
 		}, 5000);
 	}
 
-	function handleDrop(event) {
+	function handleDrop(event: DragEvent) {
 		isDragging = false;
 		const droppedFiles = event.dataTransfer.files;
-		const pdfs = Array.from(droppedFiles).filter((file) => file.type === 'application/pdf');
+		const pdfs = Array.from(droppedFiles).filter((file: File) => file.type === 'application/pdf');
+
 
 		if (pdfs.length === 0) {
 			alert('Only PDF files are allowed.');
@@ -144,11 +145,14 @@
 		selectedFiles = Array.from(dataTransfer.files);
 	}
 
-	function handleFileSelect(event) {
-		selectedFiles = Array.from(event.target.files);
+	function handleFileSelect(event: Event) {
+		const target = event.target as HTMLInputElement;
+		if (target.files) {
+			selectedFiles = Array.from(target.files)
+		}
 	}
 
-	function removeFile(index) {
+	function removeFile(index: number) {
 		selectedFiles.splice(index, 1);
 		selectedFiles = [...selectedFiles];
 
@@ -159,7 +163,7 @@
 		}
 	}
 
-	function toggleFileSelection(file) {
+	function toggleFileSelection(file: string) {
 		if (selectedForDeletion.has(file)) {
 			selectedForDeletion.delete(file);
 		} else {
