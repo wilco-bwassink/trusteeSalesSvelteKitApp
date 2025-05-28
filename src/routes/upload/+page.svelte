@@ -148,7 +148,7 @@
 	function handleFileSelect(event: Event) {
 		const target = event.target as HTMLInputElement;
 		if (target.files) {
-			selectedFiles = Array.from(target.files)
+			selectedFiles = Array.from(target.files);
 		}
 	}
 
