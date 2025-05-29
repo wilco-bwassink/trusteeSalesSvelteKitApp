@@ -130,6 +130,8 @@
 
 	function handleDrop(event: DragEvent) {
 		isDragging = false;
+		if (!event.dataTransfer) return;
+		
 		const droppedFiles = event.dataTransfer.files;
 		const pdfs = Array.from(droppedFiles).filter((file: File) => file.type === 'application/pdf');
 
