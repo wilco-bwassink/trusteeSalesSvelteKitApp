@@ -34,14 +34,28 @@ export const actions: Actions = {
 			return fail(400, { message: 'Invalid month selected.' });
 		}
 
-		const parsedDate = new Date(fileDate);
-		if (isNaN(parsedDate.getTime())) {
+		// ✅ FIX: Treat the <input type="date"> value as a plain string to avoid timezone shifts
+		// Expecting fileDate in "YYYY-MM-DD"
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(fileDate)) {
 			return fail(400, { message: 'Invalid date format.' });
 		}
+		const [y, m, d] = fileDate.split('-');
 
-		const formattedDate = `${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(
-			parsedDate.getDate()
-		).padStart(2, '0')}-${parsedDate.getFullYear()}`;
+		// (Optional) light calendar validation using Date as a *checker* (no timezone formatting)
+		// This ensures 2025-02-31 etc. are caught.
+		{
+			const probe = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
+			const isValid =
+				probe.getUTCFullYear() === Number(y) &&
+				probe.getUTCMonth() + 1 === Number(m) &&
+				probe.getUTCDate() === Number(d);
+			if (!isValid) {
+				return fail(400, { message: 'Invalid calendar date.' });
+			}
+		}
+
+		// Final format needed: MM-DD-YYYY
+		const formattedDate = `${m}-${d}-${y}`;
 
 		const uploadDir = path.resolve('static', month);
 		await mkdir(uploadDir, { recursive: true });
@@ -58,7 +72,7 @@ export const actions: Actions = {
 
 			// 👇 Rename logic based on index mode
 			const newName = isIndex
-				? `${formattedDate}_IDX.pdf`
+				? `${formattedDate}_File_IDX.pdf`
 				: `${formattedDate}_File_${String(count).padStart(3, '0')}.pdf`;
 
 			const filePath = path.join(uploadDir, newName);
