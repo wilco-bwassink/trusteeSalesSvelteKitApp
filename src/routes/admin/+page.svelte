@@ -47,7 +47,7 @@
 	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
 </nav>
 <div id="container">
-	<h2>Admin Panel</h2>
+	<h2>Trustee Sales Admin Panel</h2>
 	{#if showToast}
 		<div class="toast">✔️ Sales data saved!</div>
 	{/if}
