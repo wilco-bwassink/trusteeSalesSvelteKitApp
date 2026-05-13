@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { RequestHandler } from './$types';
+import { normalizeMonthSlug } from '$lib/months';
 
 interface FileEntry {
 	name: string;
@@ -10,8 +11,15 @@ interface FileEntry {
 }
 
 export const GET: RequestHandler = async ({ params }) => {
-	const { month } = params; // Extract the month from the request
-	const directoryPath = path.join('static', month); // Dynamically set folder based on month
+	const month = normalizeMonthSlug(params.month);
+	if (!month) {
+		return new Response(JSON.stringify({ error: 'Invalid month' }), {
+			status: 400,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
+
+	const directoryPath = path.resolve('static', month);
 
 	try {
 		// Ensure the directory exists before reading it
@@ -24,6 +32,7 @@ export const GET: RequestHandler = async ({ params }) => {
 
 		const files: FileEntry[] = fs
 			.readdirSync(directoryPath)
+			.filter((file: string) => file.toLowerCase().endsWith('.pdf'))
 			.map((file: string) => {
 				const filePath = path.join(directoryPath, file);
 				const stats = fs.statSync(filePath);

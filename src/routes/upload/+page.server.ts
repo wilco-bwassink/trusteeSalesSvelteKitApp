@@ -1,12 +1,19 @@
-import type { Actions } from './$types';
-import { json, error, fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { getMonthLabel, normalizeMonthSlug } from '$lib/months';
+
+export const load: PageServerLoad = ({ locals }) => {
+	return {
+		user: locals.user
+	};
+};
 
 export const actions: Actions = {
 	default: async ({ request }) => {
 		const form = await request.formData();
-		const month = form.get('month')?.toString();
+		const month = normalizeMonthSlug(form.get('month')?.toString());
 		const files = form.getAll('files');
 		const fileDate = form.get('fileDate')?.toString();
 		const startNumber = parseInt(form.get('startNumber')?.toString() || '1');
@@ -16,21 +23,7 @@ export const actions: Actions = {
 			return fail(400, { message: 'Month, date, and files are required.' });
 		}
 
-		const allowedMonths = [
-			'January',
-			'February',
-			'March',
-			'April',
-			'May',
-			'June',
-			'July',
-			'August',
-			'September',
-			'October',
-			'November',
-			'December'
-		];
-		if (!allowedMonths.includes(month)) {
+		if (!month) {
 			return fail(400, { message: 'Invalid month selected.' });
 		}
 
@@ -83,7 +76,7 @@ export const actions: Actions = {
 
 		const label = isIndex ? 'index file' : `${files.length} file(s)`;
 		return {
-			message: `Uploaded ${label} to ${month}/ with renamed format.`
+			message: `Uploaded ${label} to ${getMonthLabel(month)} with renamed format.`
 		};
 	}
 };

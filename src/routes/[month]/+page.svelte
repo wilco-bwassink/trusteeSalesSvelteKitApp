@@ -1,27 +1,53 @@
-<script>
-	import { onMount } from 'svelte';
+<script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import { base } from '$app/paths';
+	import { getMonthLabel, normalizeMonthSlug, type MonthSlug } from '$lib/months';
 
-	let files = [];
-	let month = '';
+	type FileEntry = {
+		name: string;
+		size: number;
+		created: number;
+		time: number;
+	};
+
+	let files: FileEntry[] = [];
+	let month: MonthSlug | null = null;
+	let monthLabel = '';
+	let requestedMonth = '';
+	let isLoading = true;
 
 	// Get the current month from the URL
-	$: month = $page.params.month;
+	$: month = normalizeMonthSlug($page.params.month);
+	$: monthLabel = getMonthLabel(month);
 
-	onMount(async () => {
+	$: if (browser && month && month !== requestedMonth) {
+		loadFiles(month);
+	}
+	$: if (browser && !month) {
+		files = [];
+		isLoading = false;
+		requestedMonth = '';
+	}
+
+	async function loadFiles(monthSlug: MonthSlug) {
+		requestedMonth = monthSlug;
+		isLoading = true;
 		try {
-			const response = await fetch(`${base}/api/files/${month}`);
+			const response = await fetch(`${base}/api/files/${monthSlug}`);
 			if (!response.ok) throw new Error('Failed to fetch files');
 
 			const data = await response.json();
 			files = data;
 		} catch (error) {
 			console.error(error);
+			files = [];
+		} finally {
+			isLoading = false;
 		}
-	});
+	}
 
-	function formatSize(bytes) {
+	function formatSize(bytes: number) {
 		if (!bytes || isNaN(bytes)) return 'Unknown Size'; // Handle missing size
 		const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(1024));
@@ -31,7 +57,7 @@
 
 <a href={`${base}`}>Back to Months</a>
 <div id="container">
-	<h1>Files for {month.charAt(0).toUpperCase() + month.slice(1)}</h1>
+	<h1>Files for {monthLabel}</h1>
 	<p>
 		The Trustee Sales are held the first Tuesday of every month from 10:00 AM to 4:00 PM at the
 		Northeast side of the Justice Center Annex at 405 Martin Luther King, Georgetown, Texas, 78626.
@@ -57,7 +83,7 @@
 				{#each files as file}
 					<tr>
 						<td>
-							<a href={'/' + month + '/' + file.name} target="_blank" rel="noopener noreferrer">
+							<a href={`${base}/${month ?? ''}/${file.name}`} target="_blank" rel="noopener noreferrer">
 								{file.name}
 							</a>
 						</td>
@@ -68,8 +94,10 @@
 				{/each}
 			</tbody>
 		</table>
-	{:else}
+	{:else if isLoading}
 		<p>Loading...</p>
+	{:else}
+		<p>No files posted for this month.</p>
 	{/if}
 	<p>
 		Please note: The data depicted in the above table is the most current data available. It is read

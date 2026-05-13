@@ -10,6 +10,6 @@ pnpm build
 
 # Restart PM2 App
 Write-Host "Restarting PM2 App..."
-pm2 restart index
+pm2 restart trustee
 
 Write-Host "Rebuild complete and PM2 restarted."

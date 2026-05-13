@@ -1,26 +1,12 @@
 import { json } from '@sveltejs/kit';
 import fs from 'fs/promises';
 import path from 'path';
+import { normalizeMonthSlug } from '$lib/months';
+import type { RequestHandler } from './$types';
 
-export async function GET({ params }) {
-	const { month } = params;
-
-	const allowedMonths = [
-		'January',
-		'February',
-		'March',
-		'April',
-		'May',
-		'June',
-		'July',
-		'August',
-		'September',
-		'October',
-		'November',
-		'December'
-	];
-
-	if (!allowedMonths.includes(month)) {
+export const GET: RequestHandler = async ({ params }) => {
+	const month = normalizeMonthSlug(params.month);
+	if (!month) {
 		return json([], { status: 400 });
 	}
 
@@ -28,9 +14,9 @@ export async function GET({ params }) {
 
 	try {
 		const entries = await fs.readdir(dirPath);
-		const pdfs = entries.filter((file) => file.endsWith('.pdf'));
+		const pdfs = entries.filter((file) => file.toLowerCase().endsWith('.pdf'));
 		return json(pdfs);
 	} catch (err) {
 		return json([], { status: 404 });
 	}
-}
+};

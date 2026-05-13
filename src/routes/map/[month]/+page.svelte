@@ -1,21 +1,23 @@
 <script lang="ts">
 	import { salesData } from '../../../stores/sales'; // adjust path to point to your store
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { get } from 'svelte/store';
 	import type { SaleRecord } from '../../../types';
+	import { normalizeMonthSlug } from '$lib/months';
 
-	let sale = null; // let inference work
+	let sale: SaleRecord | null = null;
 
 	const unsubscribe = salesData.subscribe((value) => {
-		const monthParam = get(page).params.month;
-		sale = value.find((item) => item.month.toLowerCase() === monthParam.toLowerCase()) || null;
+		const monthParam = normalizeMonthSlug(get(page).params.month);
+		sale =
+			value.find((item) => normalizeMonthSlug(item.monthSlug ?? item.month) === monthParam) || null;
 	});
 
 	onDestroy(unsubscribe);
 </script>
 
-{#if sale}
+{#if sale && sale.showMap && sale.mapUrl}
 	<div id="container">
 		<h2>Note to Trustee Sale Map Users</h2>
 		<p>
@@ -31,7 +33,7 @@
 		</div>
 	</div>
 {:else}
-	<p>Loading or no map link available for this month.</p>
+	<p>Loading or no visible map link available for this month.</p>
 {/if}
 
 <style>

@@ -2,8 +2,11 @@
 	import { salesData } from '../../stores/sales';
 	import { onDestroy } from 'svelte';
 	import { base } from '$app/paths';
+	import type { SaleRecord } from '../../types';
 
-	let sales = [];
+	export let data: { user: { username: string } | null };
+
+	let sales: SaleRecord[] = [];
 	let showToast = false;
 
 	function showSavedToast() {
@@ -18,17 +21,17 @@
 	});
 	onDestroy(unsubscribe);
 
-	function updateDate(index, event) {
-		const target = event.target;
+	function updateDate(index: number, event: Event) {
+		const target = event.target as HTMLInputElement;
 		sales[index].date = target.value;
 	}
 
-	function updateMapUrl(index, event) {
-		const target = event.target;
+	function updateMapUrl(index: number, event: Event) {
+		const target = event.target as HTMLInputElement;
 		sales[index].mapUrl = target.value;
 	}
 
-	function toggleMap(index) {
+	function toggleMap(index: number) {
 		sales[index].showMap = !sales[index].showMap;
 	}
 
@@ -44,6 +47,7 @@
 </script>
 
 <nav>
+	<span class="signed-in">Signed in as {data.user?.username ?? 'Unknown user'}</span>
 	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
 </nav>
 <div id="container">
@@ -92,7 +96,13 @@
 	nav {
 		display: flex;
 		justify-content: end;
+		align-items: center;
 		gap: 0.5em;
+	}
+	.signed-in {
+		margin-right: auto;
+		color: #555;
+		font-size: 0.9rem;
 	}
 	#container {
 		display: flex;

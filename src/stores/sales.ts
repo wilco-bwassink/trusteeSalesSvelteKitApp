@@ -1,14 +1,7 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { base } from '$app/paths';
-
-export type SaleRecord = {
-	month: string;
-	link: string;
-	date: string;
-	showMap: boolean;
-	mapUrl?: string;
-};
+import type { SaleRecord } from '../types';
 
 export const salesData = writable<SaleRecord[]>([]);
 

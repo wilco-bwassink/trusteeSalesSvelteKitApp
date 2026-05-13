@@ -2,85 +2,109 @@
   {
     "month": "January",
     "link": "/january",
-    "date": "1/7/2025",
+    "date": "1/6/2026",
     "showMap": true,
-    "mapUrl": "https://www.google.com/maps/d/edit?mid=13601xo2x_oPpd4-nzeMg0EdwQSK0ajA&usp=sharing"
+    "mapUrl": "https://www.google.com/maps/d/edit?mid=13601xo2x_oPpd4-nzeMg0EdwQSK0ajA&usp=sharing",
+    "monthSlug": "january",
+    "year": 2026
   },
   {
     "month": "February",
     "link": "/february",
-    "date": "2/4/2025",
+    "date": "2/3/2026",
     "showMap": true,
-    "mapUrl": "https://www.google.com/maps/d/edit?mid=1DPS72r5s9cORu8S0BLrfcTbwPqWJtrA&usp=sharing"
+    "mapUrl": "https://www.google.com/maps/d/edit?mid=1DPS72r5s9cORu8S0BLrfcTbwPqWJtrA&usp=sharing",
+    "monthSlug": "february",
+    "year": 2026
   },
   {
     "month": "March",
     "link": "/march",
-    "date": "3/4/2025",
+    "date": "3/3/2026",
     "showMap": true,
-    "mapUrl": "https://www.google.com/maps/d/edit?mid=195iVJx5M3eUpJbLQuwDZ9_nFCPXBmf0&usp=sharing"
+    "mapUrl": "https://www.google.com/maps/d/edit?mid=195iVJx5M3eUpJbLQuwDZ9_nFCPXBmf0&usp=sharing",
+    "monthSlug": "march",
+    "year": 2026
   },
   {
     "month": "April",
     "link": "/april",
-    "date": "4/1/2025",
+    "date": "4/7/2026",
     "showMap": true,
-    "mapUrl": "https://www.google.com/maps/d/edit?mid=1edd3d3FKBPDwiXk6aJBFydMAv_lzdAo&usp=sharing"
+    "mapUrl": "https://www.google.com/maps/d/edit?mid=1edd3d3FKBPDwiXk6aJBFydMAv_lzdAo&usp=sharing",
+    "monthSlug": "april",
+    "year": 2026
   },
   {
     "month": "May",
     "link": "/may",
-    "date": "5/6/2025",
+    "date": "5/5/2026",
     "showMap": true,
-    "mapUrl": "https://www.google.com/maps/d/viewer?mid=1-85Zoha2VVq-foL1sP_tFp5xG409Hy4&ll=30.657197079557136,-97.60258950000001&z=10"
+    "mapUrl": "https://www.google.com/maps/d/viewer?mid=1-85Zoha2VVq-foL1sP_tFp5xG409Hy4&ll=30.657197079557136,-97.60258950000001&z=10",
+    "monthSlug": "may",
+    "year": 2026
   },
   {
     "month": "June",
     "link": "/june",
-    "date": "6/3/2025",
+    "date": "6/2/2026",
     "showMap": true,
-    "mapUrl": "https://www.google.com/maps/d/viewer?mid=1FhTnsQguxGQphnI8DhC8bJmo7Z9khAg&ll=30.657197079557136,-97.60258950000001&z=10"
+    "mapUrl": "https://www.google.com/maps/d/viewer?mid=1FhTnsQguxGQphnI8DhC8bJmo7Z9khAg&ll=30.657197079557136,-97.60258950000001&z=10",
+    "monthSlug": "june",
+    "year": 2026
   },
   {
     "month": "July",
     "link": "/july",
     "date": "7/1/2025",
     "showMap": false,
-    "mapUrl": ""
+    "mapUrl": "",
+    "monthSlug": "july",
+    "year": 2025
   },
   {
     "month": "August",
     "link": "/august",
     "date": "8/5/2025",
     "showMap": false,
-    "mapUrl": ""
+    "mapUrl": "",
+    "monthSlug": "august",
+    "year": 2025
   },
   {
     "month": "September",
     "link": "/september",
     "date": "9/2/2025",
     "showMap": false,
-    "mapUrl": ""
+    "mapUrl": "",
+    "monthSlug": "september",
+    "year": 2025
   },
   {
     "month": "October",
     "link": "/october",
     "date": "10/7/2025",
     "showMap": false,
-    "mapUrl": ""
+    "mapUrl": "",
+    "monthSlug": "october",
+    "year": 2025
   },
   {
     "month": "November",
     "link": "/november",
     "date": "11/4/2025",
     "showMap": false,
-    "mapUrl": ""
+    "mapUrl": "",
+    "monthSlug": "november",
+    "year": 2025
   },
   {
     "month": "December",
     "link": "/december",
     "date": "12/2/2025",
     "showMap": false,
-    "mapUrl": ""
+    "mapUrl": "",
+    "monthSlug": "december",
+    "year": 2025
   }
 ]

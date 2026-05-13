@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { base } from '$app/paths';
+	import { MONTHS, getMonthLabel, type MonthSlug } from '$lib/months';
+
+	export let data: { user: { username: string } | null };
 
 	let message: string = '';
 	let isError: boolean = false;
 	let showToast: boolean = false;
 
-	let selectedMonth: string = '';
+	let selectedMonth: MonthSlug | '' = '';
 	let files: string[] = [];
 	let selectedFiles: File[] = [];
 	let selectedForDeletion: Set<string> = new Set();
@@ -14,21 +17,6 @@
 	let isDragging: boolean = false;
 	let fileInput: HTMLInputElement;
 	let isIndex: boolean = false; 
-
-	const months = [
-		'January',
-		'February',
-		'March',
-		'April',
-		'May',
-		'June',
-		'July',
-		'August',
-		'September',
-		'October',
-		'November',
-		'December'
-	];
 
 	$: if (selectedMonth) {
 		refreshFileList();
@@ -210,6 +198,7 @@
 </script>
 
 <nav>
+	<span class="signed-in">Signed in as {data.user?.username ?? 'Unknown user'}</span>
 	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
 </nav>
 <div id="container">
@@ -220,8 +209,8 @@
 			Select Month Folder:
 			<select name="month" bind:value={selectedMonth} required>
 				<option value="">Select a month</option>
-				{#each months as month}
-					<option value={month}>{month}</option>
+				{#each MONTHS as month}
+					<option value={month.slug}>{month.label}</option>
 				{/each}
 			</select>
 		</label>
@@ -290,41 +279,43 @@
 	{/if}
 
 	{#if selectedMonth}
-		<h2>Files in {selectedMonth}:</h2>
+		<h2>Files in {getMonthLabel(selectedMonth)}:</h2>
 		{#if files.length > 0}
 			<ul class="file-grid">
 				{#each files as file}
-					<li
-						class="file-card"
-						class:selected={selectedForDeletion.has(file)}
-						role="checkbox"
-						aria-checked={selectedForDeletion.has(file)}
-						tabindex="0"
-						on:click={() => toggleFileSelection(file)}
-						on:keydown={(e) =>
-							e.key === 'Enter' || e.key === ' ' ? toggleFileSelection(file) : null}
-					>
-						<div class="file-content">
-							<p class="file-name" aria-label={`File name: ${file}`}>{file}</p>
-							<a
-								href={`${base}/${selectedMonth.toLowerCase()}/${file}`}
-								target="_blank"
-								rel="noopener"
-								on:click|stopPropagation
-								aria-label={`View ${file}`}
-							>
-								View
-							</a>
-						</div>
-
-						<button
-							class="delete-button"
-							type="button"
-							on:click|stopPropagation={() => deleteFile(file)}
-							aria-label={`Delete ${file}`}
+					<li>
+						<div
+							class="file-card"
+							class:selected={selectedForDeletion.has(file)}
+							role="checkbox"
+							aria-checked={selectedForDeletion.has(file)}
+							tabindex="0"
+							on:click={() => toggleFileSelection(file)}
+							on:keydown={(e) =>
+								e.key === 'Enter' || e.key === ' ' ? toggleFileSelection(file) : null}
 						>
-							<!-- 🗑️ -->Remove
-						</button>
+							<div class="file-content">
+								<p class="file-name" aria-label={`File name: ${file}`}>{file}</p>
+								<a
+									href={`${base}/${selectedMonth}/${file}`}
+									target="_blank"
+									rel="noopener"
+									on:click|stopPropagation
+									aria-label={`View ${file}`}
+								>
+									View
+								</a>
+							</div>
+
+							<button
+								class="delete-button"
+								type="button"
+								on:click|stopPropagation={() => deleteFile(file)}
+								aria-label={`Delete ${file}`}
+							>
+								<!-- 🗑️ -->Remove
+							</button>
+						</div>
 					</li>
 				{/each}
 			</ul>
@@ -347,7 +338,13 @@
 	nav {
 		display: flex;
 		justify-content: end;
+		align-items: center;
 		gap: 0.5em;
+	}
+	.signed-in {
+		margin-right: auto;
+		color: #555;
+		font-size: 0.9rem;
 	}
 	#container {
 		display: flex;

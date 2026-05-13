@@ -1,14 +1,20 @@
-<script>
+<script lang="ts">
 	// If you want to hydrate a store, you can uncomment these:
 	// import { salesData } from '../stores/sales';
 	// import { get } from 'svelte/store';
 	import { base } from '$app/paths';
+	import { getMonthRoute, normalizeMonthSlug } from '$lib/months';
+	import type { SaleRecord } from '../types';
 
 	// Get `data.sales` from load()
-	export let data;
+	export let data: { sales?: SaleRecord[] } = { sales: [] };
 
 	// Use the passed-in sales list
-	let sales = data.sales;
+	let sales = data.sales ?? [];
+
+	function getSaleMonthSlug(sale: SaleRecord) {
+		return sale.monthSlug ?? normalizeMonthSlug(sale.month) ?? '';
+	}
 
 	// If you prefer to get sales from a store:
 	// let sales = get(salesData);
@@ -28,10 +34,12 @@
 	<div class="monthAndMap">
 		{#each sales as sale}
 			<div class="month">
-				<div class="monthLink"><a href={`${base}${sale.link}`}>{sale.month}</a></div>
+				<div class="monthLink">
+					<a href={`${base}${getMonthRoute(getSaleMonthSlug(sale))}`}>{sale.month}</a>
+				</div>
 				<div class="date">{sale.date}</div>
 				{#if sale.showMap && sale.mapUrl}
-					<a href={`${base}/map/${sale.month}`}>See the Map</a>
+					<a href={`${base}/map/${getSaleMonthSlug(sale)}`}>See the Map</a>
 				{:else}
 					<span>Coming Soon</span>
 				{/if}
