@@ -31,6 +31,17 @@ Uploaded trustee sale PDFs are stored outside `static/`. In local dev, the app f
 TRUSTEE_FILE_STORAGE_DIR=C:/data/trustee-sales
 ```
 
+## IIS authentication
+
+Protected routes such as `/trustee/upload` rely on IIS Windows Authentication. The app expects IIS URL Rewrite to pass the authenticated Windows account through the `X-Windows-User` request header.
+
+On the IIS site or application that owns the `/trustee` rewrite rules:
+
+- Disable Anonymous Authentication.
+- Enable Windows Authentication.
+- In URL Rewrite, add `HTTP_X_WINDOWS_USER` to the allowed server variables list.
+- Keep the rewrite target port in `web.config` aligned with the PM2 `PORT` in `ecosystem.config.cjs`.
+
 ## Building
 
 To create a production version of your app:
