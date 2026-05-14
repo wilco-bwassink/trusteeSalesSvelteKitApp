@@ -16,6 +16,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isProtectedSalesWrite = path === '/api/sales' && event.request.method !== 'GET';
 
 	if ((isProtectedRoute || isProtectedSalesWrite) && !event.locals.user) {
+		console.info(`[auth-test] redirecting ${event.url.pathname}; x-windows-user header was not present`);
 		throw redirect(302, '/trustee');
 	}
 
