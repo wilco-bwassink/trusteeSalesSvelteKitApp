@@ -25,6 +25,12 @@ npm run dev
 npm run dev -- --open
 ```
 
+Uploaded trustee sale PDFs are stored outside `static/`. In local dev, the app falls back to `storage/trustee-sales` when `TRUSTEE_FILE_STORAGE_DIR` is not set. On shared dev and production servers, set `TRUSTEE_FILE_STORAGE_DIR` to the machine-specific storage folder, for example:
+
+```bash
+TRUSTEE_FILE_STORAGE_DIR=C:/data/trustee-sales
+```
+
 ## Building
 
 To create a production version of your app:

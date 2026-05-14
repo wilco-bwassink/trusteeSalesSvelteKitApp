@@ -1,5 +1,6 @@
 test-results
 node_modules
+storage/
 
 # Output
 .output
@@ -24,3 +25,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 *.pdf
+
+.env.example

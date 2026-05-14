@@ -83,7 +83,11 @@
 				{#each files as file}
 					<tr>
 						<td>
-							<a href={`${base}/${month ?? ''}/${file.name}`} target="_blank" rel="noopener noreferrer">
+							<a
+								href={`${base}/files/${month ?? ''}/${encodeURIComponent(file.name)}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
 								{file.name}
 							</a>
 						</td>

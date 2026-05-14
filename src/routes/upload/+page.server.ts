@@ -1,8 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
-import { getMonthLabel, normalizeMonthSlug } from '$lib/months';
+import { getMonthLabel } from '$lib/months';
+import { FileStorageError, saveUploadedPdfs } from '$lib/server/file-storage';
 
 export const load: PageServerLoad = ({ locals }) => {
 	return {
@@ -13,70 +12,23 @@ export const load: PageServerLoad = ({ locals }) => {
 export const actions: Actions = {
 	default: async ({ request }) => {
 		const form = await request.formData();
-		const month = normalizeMonthSlug(form.get('month')?.toString());
+		const month = form.get('month')?.toString();
 		const files = form.getAll('files');
 		const fileDate = form.get('fileDate')?.toString();
-		const startNumber = parseInt(form.get('startNumber')?.toString() || '1');
-		const isIndex = form.get('isIndex') === 'on'; // 👈 checkbox sends "on" if checked
+		const startNumber = Number(form.get('startNumber')?.toString() || '1');
+		const isIndex = form.get('isIndex') === 'on';
 
-		if (!month || !fileDate || files.length === 0) {
-			return fail(400, { message: 'Month, date, and files are required.' });
-		}
-
-		if (!month) {
-			return fail(400, { message: 'Invalid month selected.' });
-		}
-
-		// ✅ FIX: Treat the <input type="date"> value as a plain string to avoid timezone shifts
-		// Expecting fileDate in "YYYY-MM-DD"
-		if (!/^\d{4}-\d{2}-\d{2}$/.test(fileDate)) {
-			return fail(400, { message: 'Invalid date format.' });
-		}
-		const [y, m, d] = fileDate.split('-');
-
-		// (Optional) light calendar validation using Date as a *checker* (no timezone formatting)
-		// This ensures 2025-02-31 etc. are caught.
-		{
-			const probe = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d)));
-			const isValid =
-				probe.getUTCFullYear() === Number(y) &&
-				probe.getUTCMonth() + 1 === Number(m) &&
-				probe.getUTCDate() === Number(d);
-			if (!isValid) {
-				return fail(400, { message: 'Invalid calendar date.' });
+		try {
+			const result = await saveUploadedPdfs({ month, files, fileDate, startNumber, isIndex });
+			const label = isIndex ? 'index file' : `${result.saved.length} file(s)`;
+			return {
+				message: `Uploaded ${label} to ${getMonthLabel(result.month)} with renamed format.`
+			};
+		} catch (error) {
+			if (error instanceof FileStorageError) {
+				return fail(error.status, { message: error.message });
 			}
+			throw error;
 		}
-
-		// Final format needed: MM-DD-YYYY
-		const formattedDate = `${m}-${d}-${y}`;
-
-		const uploadDir = path.resolve('static', month);
-		await mkdir(uploadDir, { recursive: true });
-
-		let count = startNumber;
-
-		for (const file of files) {
-			if (!(file instanceof File)) continue;
-			if (file.type !== 'application/pdf') {
-				return fail(400, { message: `Only PDF files are allowed. "${file.name}" is not a PDF.` });
-			}
-
-			const buffer = Buffer.from(await file.arrayBuffer());
-
-			// 👇 Rename logic based on index mode
-			const newName = isIndex
-				? `${formattedDate}_File_IDX.pdf`
-				: `${formattedDate}_File_${String(count).padStart(3, '0')}.pdf`;
-
-			const filePath = path.join(uploadDir, newName);
-			await writeFile(filePath, buffer);
-
-			if (!isIndex) count++; // 👈 skip counting if it's an index file
-		}
-
-		const label = isIndex ? 'index file' : `${files.length} file(s)`;
-		return {
-			message: `Uploaded ${label} to ${getMonthLabel(month)} with renamed format.`
-		};
 	}
 };

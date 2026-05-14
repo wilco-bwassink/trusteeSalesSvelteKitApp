@@ -29,7 +29,7 @@
 		not be posted before the 20th day. (Texas Property Code Section 51.002(b))
 	</p>
 
-	<h2>Trustee Sale Schedules</h2>
+	<h1>Trustee Sale Schedules</h1>
 
 	<div class="monthAndMap">
 		{#each sales as sale}
@@ -55,7 +55,7 @@
 		align-items: center;
 	}
 
-	h2 {
+	h1 {
 		text-align: center;
 	}
 

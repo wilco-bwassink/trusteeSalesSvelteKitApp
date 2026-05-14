@@ -297,7 +297,7 @@
 							<div class="file-content">
 								<p class="file-name" aria-label={`File name: ${file}`}>{file}</p>
 								<a
-									href={`${base}/${selectedMonth}/${file}`}
+									href={`${base}/files/${selectedMonth}/${encodeURIComponent(file)}`}
 									target="_blank"
 									rel="noopener"
 									on:click|stopPropagation
