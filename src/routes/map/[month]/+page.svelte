@@ -54,15 +54,17 @@
 	}
 	.accept {
 		padding: 0.5rem 1rem;
-		background-color: var(--wc-green);
-		color: #fff;
+		color: var(--wc-main);
+		background-color: #fff;
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
+		border: 2px solid #000;
 
 		a {
-			color: #fff;
+			color: var(--wc-main);
 			text-decoration: none;
+			font-weight: bold;
 		}
 
 		a:hover {
@@ -72,15 +74,17 @@
 
 	.decline {
 		padding: 0.5rem 1rem;
-		background-color: var(--wc-purple);
-		color: #fff;
+		color: var(--wc-purple);
+		background-color: #fff;
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
+		border: 2px solid #000;
 
 		a {
-			color: #fff;
+			color: var(--wc-purple);
 			text-decoration: none;
+			font-weight: bold;
 		}
 
 		a:hover {

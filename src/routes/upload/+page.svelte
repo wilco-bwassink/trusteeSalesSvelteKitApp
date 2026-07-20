@@ -3,7 +3,9 @@
 	import { base } from '$app/paths';
 	import { MONTHS, getMonthLabel, type MonthSlug } from '$lib/months';
 
-	export let data: { user: { username: string } | null };
+	export let data: {
+		user: { username: string; authMethod: 'windows' | 'password' | 'development' } | null;
+	};
 
 	let message: string = '';
 	let isError: boolean = false;
@@ -200,6 +202,9 @@
 <nav>
 	<span class="signed-in">Signed in as {data.user?.username ?? 'Unknown user'}</span>
 	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
+	<form class="logout-form" method="POST" action={`${base}/logout`}>
+		<button class="logout" type="submit">Sign out</button>
+	</form>
 </nav>
 <div id="container">
 	<h1>Trustee Sale Upload</h1>
@@ -345,6 +350,15 @@
 		margin-right: auto;
 		color: #555;
 		font-size: 0.9rem;
+	}
+	.logout-form {
+		display: block;
+		margin: 0 0 0 0.5rem;
+	}
+	.logout-form .logout {
+		padding: 0.25rem 0.5rem;
+		background: #6b7280;
+		font-size: 0.85rem;
 	}
 	#container {
 		display: flex;

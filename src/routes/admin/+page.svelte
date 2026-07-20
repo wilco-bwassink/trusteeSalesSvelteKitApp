@@ -4,7 +4,9 @@
 	import { base } from '$app/paths';
 	import type { SaleRecord } from '../../types';
 
-	export let data: { user: { username: string } | null };
+	export let data: {
+		user: { username: string; authMethod: 'windows' | 'password' | 'development' } | null;
+	};
 
 	let sales: SaleRecord[] = [];
 	let showToast = false;
@@ -49,6 +51,9 @@
 <nav>
 	<span class="signed-in">Signed in as {data.user?.username ?? 'Unknown user'}</span>
 	<a href={`${base}/upload`}>Upload</a> | <a href={`${base}/admin`}>Admin</a>
+	<form method="POST" action={`${base}/logout`}>
+		<button class="logout" type="submit">Sign out</button>
+	</form>
 </nav>
 <div id="container">
 	<h2>Trustee Sales Admin Panel</h2>
@@ -103,6 +108,14 @@
 		margin-right: auto;
 		color: #555;
 		font-size: 0.9rem;
+	}
+	nav form {
+		margin: 0 0 0 0.5rem;
+	}
+	nav .logout {
+		padding: 0.25rem 0.5rem;
+		background: #6b7280;
+		font-size: 0.85rem;
 	}
 	#container {
 		display: flex;
