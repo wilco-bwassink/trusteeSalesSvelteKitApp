@@ -2,6 +2,7 @@
 	import { salesData } from '../../../stores/sales'; // adjust path to point to your store
 	import { onDestroy } from 'svelte';
 	import { page } from '$app/stores';
+	import { base } from '$app/paths';
 	import { get } from 'svelte/store';
 	import type { SaleRecord } from '../../../types';
 	import { normalizeMonthSlug } from '$lib/months';
@@ -16,6 +17,8 @@
 
 	onDestroy(unsubscribe);
 </script>
+
+<a class="back-to-months" href={`${base}/`}>Back to Months</a>
 
 {#if sale && sale.showMap && sale.mapUrl}
 	<div id="container">
@@ -37,6 +40,12 @@
 {/if}
 
 <style>
+	.back-to-months {
+		position: absolute;
+		top: 1rem;
+		left: 1rem;
+	}
+
 	#container {
 		display: flex;
 		flex-direction: column;
@@ -54,15 +63,17 @@
 	}
 	.accept {
 		padding: 0.5rem 1rem;
-		background-color: var(--wc-green);
-		color: #fff;
+		color: var(--wc-main);
+		background-color: #fff;
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
+		border: 2px solid #000;
 
 		a {
-			color: #fff;
+			color: var(--wc-main);
 			text-decoration: none;
+			font-weight: bold;
 		}
 
 		a:hover {
@@ -72,15 +83,17 @@
 
 	.decline {
 		padding: 0.5rem 1rem;
-		background-color: var(--wc-purple);
-		color: #fff;
+		color: var(--wc-purple);
+		background-color: #fff;
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
+		border: 2px solid #000;
 
 		a {
-			color: #fff;
+			color: var(--wc-purple);
 			text-decoration: none;
+			font-weight: bold;
 		}
 
 		a:hover {

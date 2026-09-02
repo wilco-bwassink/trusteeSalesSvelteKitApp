@@ -7,7 +7,8 @@ module.exports = {
 				HOST: '127.0.0.1',
 				PORT: '3002',
 				ORIGIN: 'http://dev.wilco.org',
-				BODY_SIZE_LIMIT: '25M'
+				BODY_SIZE_LIMIT: '25M',
+				TRUSTEE_FILE_STORAGE_DIR: 'E:/Websites/trustee/storage/trustee-sales'
 			}
 		}
 	]
