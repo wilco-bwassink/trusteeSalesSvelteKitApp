@@ -47,7 +47,7 @@
 				<div class="date">{sale.date}</div>
 				{#if sale.showMap && sale.mapUrl}
 					<a class="mapLink" href={`${base}/map/${getSaleMonthSlug(sale)}`}
-						>🗺️ See the {sale.month} Map</a
+						>See the {sale.month} Map</a
 					>
 				{:else}
 					<span class="comingSoon">Coming Soon</span>

@@ -3,7 +3,7 @@
     "month": "January",
     "link": "/january",
     "date": "1/6/2026",
-    "showMap": true,
+    "showMap": false,
     "mapUrl": "https://www.google.com/maps/d/edit?mid=13601xo2x_oPpd4-nzeMg0EdwQSK0ajA&usp=sharing",
     "monthSlug": "january",
     "year": 2026
@@ -12,7 +12,7 @@
     "month": "February",
     "link": "/february",
     "date": "2/3/2026",
-    "showMap": true,
+    "showMap": false,
     "mapUrl": "https://www.google.com/maps/d/edit?mid=1DPS72r5s9cORu8S0BLrfcTbwPqWJtrA&usp=sharing",
     "monthSlug": "february",
     "year": 2026
@@ -21,7 +21,7 @@
     "month": "March",
     "link": "/march",
     "date": "3/3/2026",
-    "showMap": true,
+    "showMap": false,
     "mapUrl": "https://www.google.com/maps/d/edit?mid=195iVJx5M3eUpJbLQuwDZ9_nFCPXBmf0&usp=sharing",
     "monthSlug": "march",
     "year": 2026
@@ -30,7 +30,7 @@
     "month": "April",
     "link": "/april",
     "date": "4/7/2026",
-    "showMap": true,
+    "showMap": false,
     "mapUrl": "https://www.google.com/maps/d/edit?mid=1edd3d3FKBPDwiXk6aJBFydMAv_lzdAo&usp=sharing",
     "monthSlug": "april",
     "year": 2026
@@ -39,7 +39,7 @@
     "month": "May",
     "link": "/may",
     "date": "5/5/2026",
-    "showMap": true,
+    "showMap": false,
     "mapUrl": "https://www.google.com/maps/d/viewer?mid=1-85Zoha2VVq-foL1sP_tFp5xG409Hy4&ll=30.657197079557136,-97.60258950000001&z=10",
     "monthSlug": "may",
     "year": 2026
@@ -84,8 +84,8 @@
     "month": "October",
     "link": "/october",
     "date": "10/7/2025",
-    "showMap": false,
-    "mapUrl": "",
+    "showMap": true,
+    "mapUrl": "https://www.google.com/maps/d/edit?mid=1Q0vkHjbbh8ZX08s7Zh-WAM_WzgeRPGs&usp=sharing",
     "monthSlug": "october",
     "year": 2025
   },
@@ -93,8 +93,8 @@
     "month": "November",
     "link": "/november",
     "date": "11/4/2025",
-    "showMap": false,
-    "mapUrl": "",
+    "showMap": true,
+    "mapUrl": "https://www.google.com/maps/d/edit?mid=1IJhmfkTG6B100yDbAhrPUg6FpAAu3og&usp=sharing",
     "monthSlug": "november",
     "year": 2025
   },
