@@ -3,7 +3,7 @@
 declare global {
 	namespace App {
 		interface Locals {
-			user: { username: string } | null;
+			user: import('$lib/server/auth').AuthenticatedUser | null;
 		}
 		// interface Error {}
 		// interface Locals {}

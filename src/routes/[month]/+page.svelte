@@ -54,6 +54,9 @@
 		return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
 	}
 </script>
+<svelte:head>
+<script async src="https://docaccess.com/docbox.js"></script>
+</svelte:head>
 
 <a href={`${base}`}>Back to Months</a>
 <div id="container">

@@ -1,7 +1,16 @@
-import { error, type Handle } from '@sveltejs/kit';
+import { error, redirect, json, type Handle } from '@sveltejs/kit';
+import { base } from '$app/paths';
 import { dev } from '$app/environment';
+import { json, redirect, type Handle } from '@sveltejs/kit';
+import {
+	AUTH_COOKIE_NAME,
+	getStaticAuthConfig,
+	verifySessionToken,
+	type AuthenticatedUser
+} from '$lib/server/auth';
 
-const protectedRoutePrefixes = ['/admin', '/upload', '/delete-file', '/list-files'];
+const protectedRoutes = ['/admin', '/upload', '/delete-file', '/list-files'];
+const protectedEndpointRoutes = ['/delete-file', '/list-files'];
 const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
@@ -17,26 +26,41 @@ function isProtectedRequest(path: string, method: string) {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const path = event.url.pathname.replace(/^\/trustee/, '');
-	const protectedRequest = isProtectedRequest(path, event.request.method);
-	const devUser = dev && localHosts.has(event.url.hostname) ? 'LOCALDEV\\developer' : null;
+	const path = event.url.pathname.replace(new RegExp(`^${base}`), '') || '/';
+	const staticAuthConfig = getStaticAuthConfig();
+	const windowsUsername = event.request.headers.get('x-windows-user')?.trim() || null;
+	const sessionToken = event.cookies.get(AUTH_COOKIE_NAME);
+	let user: AuthenticatedUser | null = windowsUsername
+		? { username: windowsUsername, authMethod: 'windows' }
+		: null;
 
-	// IIS Windows Authentication and the authorization rules in web.config are the
-	// access-control boundary. The Node server listens only on loopback, so public
-	// requests must pass IIS before they can reach these protected routes.
-	event.locals.user = protectedRequest
-		? { username: devUser ?? 'Windows authenticated user' }
-		: devUser
-			? { username: devUser }
-			: null;
+	if (!user && staticAuthConfig && sessionToken) {
+		user = verifySessionToken(
+			sessionToken,
+			staticAuthConfig.sessionSecret,
+			staticAuthConfig.username
+		);
+	}
 
-	// Windows authentication is sent automatically by browsers in many intranet configurations.
-	// Reject cross-site state-changing requests before route actions run.
-	if (protectedRequest && unsafeMethods.has(event.request.method)) {
-		const origin = event.request.headers.get('origin');
-		if (origin !== event.url.origin) {
-			throw error(403, 'Cross-site request rejected.');
+	if (!user && dev && !staticAuthConfig && localHosts.has(event.url.hostname)) {
+		user = { username: 'LOCALDEV\\developer', authMethod: 'development' };
+	}
+
+	event.locals.user = user;
+
+	const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route));
+	const isProtectedSalesWrite = path === '/api/sales' && event.request.method !== 'GET';
+
+	if ((isProtectedRoute || isProtectedSalesWrite) && !event.locals.user) {
+		const isEndpointRequest =
+			protectedEndpointRoutes.some((route) => path.startsWith(route)) || isProtectedSalesWrite;
+
+		if (isEndpointRequest) {
+			return json({ message: 'Authentication required.' }, { status: 401 });
 		}
+
+		const returnTo = `${event.url.pathname}${event.url.search}`;
+		throw redirect(303, `${base}/login?returnTo=${encodeURIComponent(returnTo)}`);
 	}
 
 	return resolve(event);
