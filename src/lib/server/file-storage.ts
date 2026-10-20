@@ -1,8 +1,9 @@
 import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { mkdir, readFile, readdir, stat, unlink, writeFile } from 'fs/promises';
+import { mkdir, readFile, readdir, stat, unlink } from 'fs/promises';
 import path from 'path';
 import { normalizeMonthSlug, type MonthSlug } from '$lib/months';
+import { atomicWriteFile, hasErrorCode, withFileLock } from './safe-files';
 
 export type PdfFileEntry = {
 	name: string;
@@ -41,6 +42,8 @@ type SaveUploadedPdfsOptions = {
 	isIndex: boolean;
 };
 
+// Filenames must not contain ASCII control characters, including NUL.
+// eslint-disable-next-line no-control-regex
 const invalidFilenameCharacters = /[<>:"|?*\u0000-\u001f]/;
 
 function getStorageRoot() {
@@ -108,7 +111,10 @@ function getMonthDirectory(monthValue: string | null | undefined) {
 	};
 }
 
-function getPdfFilePath(monthValue: string | null | undefined, filenameValue: string | null | undefined) {
+function getPdfFilePath(
+	monthValue: string | null | undefined,
+	filenameValue: string | null | undefined
+) {
 	const { month, directory } = getMonthDirectory(monthValue);
 	const filename = requirePdfFilename(filenameValue);
 	return {
@@ -147,7 +153,7 @@ function formatFileDate(value: string | null | undefined) {
 }
 
 function requireStartNumber(value: number) {
-	if (!Number.isInteger(value) || value < 1) {
+	if (!Number.isSafeInteger(value) || value < 1) {
 		throw new FileStorageError(400, 'Start number must be a positive whole number.');
 	}
 
@@ -205,12 +211,17 @@ export async function saveUploadedPdfs(options: SaveUploadedPdfsOptions): Promis
 	if (files.length === 0) {
 		throw new FileStorageError(400, 'At least one PDF file is required.');
 	}
-
-	await mkdir(directory, { recursive: true });
+	if (options.isIndex && files.length !== 1) {
+		throw new FileStorageError(400, 'Upload exactly one PDF when Index file is selected.');
+	}
+	if (!Number.isSafeInteger(startNumber + files.length - 1)) {
+		throw new FileStorageError(400, 'The file numbering is too large.');
+	}
 
 	let count = startNumber;
-	const saved: string[] = [];
+	const prepared: { name: string; contents: Buffer }[] = [];
 
+	// Validate the entire selection before publishing any file.
 	for (const file of files) {
 		if (file.type && file.type !== 'application/pdf') {
 			throw new FileStorageError(400, `Only PDF files are allowed. "${file.name}" is not a PDF.`);
@@ -225,16 +236,46 @@ export async function saveUploadedPdfs(options: SaveUploadedPdfsOptions): Promis
 			? `${formattedDate}_File_IDX.pdf`
 			: `${formattedDate}_File_${String(count).padStart(3, '0')}.pdf`;
 
-		const filePath = resolveInside(directory, newName);
-		await writeFile(filePath, buffer);
-		saved.push(newName);
+		prepared.push({ name: newName, contents: buffer });
 
 		if (!options.isIndex) {
 			count++;
 		}
 	}
 
-	return { month, saved };
+	await mkdir(directory, { recursive: true });
+	try {
+		return await withFileLock(resolveInside(directory, '.write.lock'), async () => {
+			const saved: string[] = [];
+			try {
+				for (const file of prepared) {
+					try {
+						await atomicWriteFile(resolveInside(directory, file.name), file.contents, false);
+					} catch (error) {
+						if (hasErrorCode(error, 'EEXIST')) {
+							throw new FileStorageError(
+								409,
+								`"${file.name}" already exists. No files were uploaded. Choose a different date or start number.`
+							);
+						}
+						throw error;
+					}
+					saved.push(file.name);
+				}
+			} catch (error) {
+				// Roll back only files created by this request. The month lock prevents
+				// another upload or deletion from changing these files during rollback.
+				await Promise.all(saved.map((name) => unlink(resolveInside(directory, name))));
+				throw error;
+			}
+			return { month, saved };
+		});
+	} catch (error) {
+		if (hasErrorCode(error, 'EEXIST')) {
+			throw new FileStorageError(409, 'Another file operation is in progress. Please try again.');
+		}
+		throw error;
+	}
 }
 
 export async function deletePdfFiles(
@@ -248,21 +289,26 @@ export async function deletePdfFiles(
 		}
 		return requirePdfFilename(filename);
 	});
-	const deleted: string[] = [];
-
-	for (const filename of filenames) {
-		const filePath = resolveInside(directory, filename);
-		try {
-			await unlink(filePath);
-			deleted.push(filename);
-		} catch (error) {
-			if (!isMissingFileError(error)) {
-				throw error;
+	await mkdir(directory, { recursive: true });
+	try {
+		return await withFileLock(resolveInside(directory, '.write.lock'), async () => {
+			const deleted: string[] = [];
+			for (const filename of filenames) {
+				try {
+					await unlink(resolveInside(directory, filename));
+					deleted.push(filename);
+				} catch (error) {
+					if (!isMissingFileError(error)) throw error;
+				}
 			}
+			return deleted;
+		});
+	} catch (error) {
+		if (hasErrorCode(error, 'EEXIST')) {
+			throw new FileStorageError(409, 'Another file operation is in progress. Please try again.');
 		}
+		throw error;
 	}
-
-	return deleted;
 }
 
 export async function getPdfFile(

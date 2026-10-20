@@ -9,6 +9,8 @@ storage/
 .wrangler
 /.svelte-kit
 /build
+/.releases
+/.deploy.lock
 
 # OS
 .DS_Store

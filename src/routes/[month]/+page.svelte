@@ -16,6 +16,8 @@
 	let monthLabel = '';
 	let requestedMonth = '';
 	let isLoading = true;
+	let loadError = '';
+	let requestId = 0;
 
 	// Get the current month from the URL
 	$: month = normalizeMonthSlug($page.params.month);
@@ -25,25 +27,33 @@
 		loadFiles(month);
 	}
 	$: if (browser && !month) {
+		requestId++;
 		files = [];
 		isLoading = false;
 		requestedMonth = '';
+		loadError = 'Invalid month.';
 	}
 
 	async function loadFiles(monthSlug: MonthSlug) {
+		const currentRequest = ++requestId;
 		requestedMonth = monthSlug;
 		isLoading = true;
+		loadError = '';
+		files = [];
 		try {
 			const response = await fetch(`${base}/api/files/${monthSlug}`);
 			if (!response.ok) throw new Error('Failed to fetch files');
 
 			const data = await response.json();
-			files = data;
+			if (currentRequest === requestId) files = data;
 		} catch (error) {
 			console.error(error);
-			files = [];
+			if (currentRequest === requestId) {
+				files = [];
+				loadError = 'Unable to load the files for this month. Please try again.';
+			}
 		} finally {
-			isLoading = false;
+			if (currentRequest === requestId) isLoading = false;
 		}
 	}
 
@@ -54,8 +64,9 @@
 		return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
 	}
 </script>
+
 <svelte:head>
-<script async src="https://docaccess.com/docbox.js"></script>
+	<script async src="https://docaccess.com/docbox.js"></script>
 </svelte:head>
 
 <a href={`${base}`}>Back to Months</a>
@@ -72,7 +83,12 @@
 		filed.
 	</p>
 
-	{#if files.length}
+	{#if loadError}
+		<p role="alert">{loadError}</p>
+		{#if month}
+			<button on:click={() => month && loadFiles(month)}>Try again</button>
+		{/if}
+	{:else if files.length}
 		<table>
 			<thead>
 				<tr>

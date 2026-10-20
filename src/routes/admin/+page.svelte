@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { salesData } from '../../stores/sales';
-	import { onDestroy } from 'svelte';
 	import { base } from '$app/paths';
 	import type { SaleRecord } from '../../types';
 
 	export let data: {
 		user: { username: string; authMethod: 'windows' | 'password' | 'development' } | null;
+		sales: SaleRecord[];
+		revision: string;
+		loadError: string;
 	};
 
-	let sales: SaleRecord[] = [];
+	let sales: SaleRecord[] = data.sales.map((sale) => ({ ...sale }));
+	let revision = data.revision;
+	let saveError = '';
+	let isSaving = false;
 	let showToast = false;
 
 	function showSavedToast() {
@@ -17,11 +22,6 @@
 			showToast = false;
 		}, 2000);
 	}
-
-	const unsubscribe = salesData.subscribe((value) => {
-		sales = value;
-	});
-	onDestroy(unsubscribe);
 
 	function updateDate(index: number, event: Event) {
 		const target = event.target as HTMLInputElement;
@@ -38,13 +38,34 @@
 	}
 
 	async function saveToFile() {
-		await fetch(`${base}/admin/api/sales`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(sales)
-		});
-		showSavedToast();
-		salesData.set([...sales]);
+		if (isSaving || !revision) return;
+		isSaving = true;
+		saveError = '';
+		showToast = false;
+		try {
+			const response = await fetch(`${base}/admin/api/sales`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', 'If-Match': revision },
+				body: JSON.stringify(sales)
+			});
+			const result = await response.json().catch(() => null);
+			if (!response.ok || !result?.success || !result.revision || !Array.isArray(result.sales)) {
+				throw new Error(
+					result?.message || 'The schedule could not be saved. Your edits have been kept on screen.'
+				);
+			}
+			revision = result.revision;
+			sales = result.sales;
+			salesData.set(sales.map((sale) => ({ ...sale })));
+			showSavedToast();
+		} catch (error) {
+			saveError =
+				error instanceof Error
+					? error.message
+					: 'Unable to save. Your edits have been kept on screen.';
+		} finally {
+			isSaving = false;
+		}
 	}
 </script>
 
@@ -54,6 +75,9 @@
 </nav>
 <div id="container">
 	<h2>Trustee Sales Admin Panel</h2>
+	{#if data.loadError || saveError}
+		<p role="alert">{data.loadError || saveError}</p>
+	{/if}
 	{#if showToast}
 		<div class="toast">✔️ Sales data saved!</div>
 	{/if}
@@ -71,18 +95,26 @@
 				<tr>
 					<td>{sale.month}</td>
 					<td class="date">
-						<input type="text" value={sale.date} on:input={(e) => updateDate(index, e)} />
+						<input
+							aria-label={`${sale.month} sale date`}
+							disabled={isSaving}
+							type="text"
+							value={sale.date}
+							on:input={(e) => updateDate(index, e)}
+						/>
 					</td>
 					<td>
 						<input
 							type="text"
+							aria-label={`${sale.month} map URL`}
+							disabled={isSaving}
 							value={sale.mapUrl}
 							on:input={(e) => updateMapUrl(index, e)}
 							placeholder="Map URL"
 						/>
 					</td>
 					<td class="map">
-						<button on:click={() => toggleMap(index)}>
+						<button disabled={isSaving} on:click={() => toggleMap(index)}>
 							{sale.showMap ? 'Hide Map' : 'Show Map'}
 						</button>
 					</td>
@@ -91,7 +123,9 @@
 		</tbody>
 	</table>
 
-	<button on:click={saveToFile} style="margin-top: 1rem;">Save All</button>
+	<button disabled={isSaving || !revision} on:click={saveToFile} style="margin-top: 1rem;">
+		{isSaving ? 'Saving…' : 'Save All'}
+	</button>
 </div>
 
 <style>

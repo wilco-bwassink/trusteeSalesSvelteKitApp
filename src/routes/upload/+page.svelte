@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import { base } from '$app/paths';
 	import { MONTHS, getMonthLabel, type MonthSlug } from '$lib/months';
 
@@ -18,19 +19,32 @@
 
 	let isDragging: boolean = false;
 	let fileInput: HTMLInputElement;
-	let isIndex: boolean = false; 
+	let isIndex: boolean = false;
+	let isUploading = false;
+	let isDeleting = false;
+	let isLoadingFiles = false;
+	let fileListError = '';
+	let listRequestId = 0;
 
-	$: if (selectedMonth) {
-		refreshFileList();
-	}
+	$: refreshFileList(selectedMonth);
 
-	async function refreshFileList() {
-		if (!selectedMonth) return;
+	async function refreshFileList(month = selectedMonth) {
+		const currentRequest = ++listRequestId;
+		selectedForDeletion = new Set();
+		files = [];
+		fileListError = '';
+		isLoadingFiles = !!month;
+		if (!month) return;
 		try {
-			const res = await fetch(`${base}/list-files/${selectedMonth}`);
-			files = res.ok ? await res.json() : [];
+			const res = await fetch(`${base}/list-files/${month}`);
+			if (!res.ok) throw new Error('Unable to list files.');
+			const result = await res.json();
+			if (currentRequest === listRequestId) files = result;
 		} catch {
-			files = [];
+			if (currentRequest === listRequestId)
+				fileListError = 'Unable to load files. Please try again.';
+		} finally {
+			if (currentRequest === listRequestId) isLoadingFiles = false;
 		}
 	}
 
@@ -54,77 +68,45 @@
 		isError = false;
 	}
 
-	function handleEnhanceResult(result: { type: string; data?: any; error?: any}) {
-		console.log('Enhance result:', result);
-
-		if (result.type === 'error') {
-			isError = true;
-			message = result.error?.message || 'Upload failed.';
-		} else if (result.type === 'failure') {
-			isError = true;
-			message = result.data?.message || 'Upload failed.';
-		} else if (result.type === 'success') {
-			isError = false;
-			message = result.data?.message || 'Upload successful.';
-			clearForm();
-			refreshFileList();
+	const handleEnhance: SubmitFunction = ({ cancel }) => {
+		if (isUploading || isDeleting) {
+			cancel();
+			return;
 		}
-
-		if (!message) {
-			console.warn('No toast message was set before displaying');
-			message = isError ? 'Something went wrong.' : 'Success';
-		}
-
+		isUploading = true;
 		showToast = false;
-		requestAnimationFrame(() => {
+		return async ({ result }) => {
+			isUploading = false;
+			if (result.type === 'success') {
+				clearForm();
+				isError = false;
+				message =
+					typeof result.data?.message === 'string' ? result.data.message : 'Upload successful.';
+			} else {
+				isError = true;
+				message =
+					result.type === 'failure' && typeof result.data?.message === 'string'
+						? result.data.message
+						: 'Upload failed. Your selection has been kept. Check the file list before retrying.';
+			}
 			showToast = true;
-			setTimeout(() => {
-				message = '';
-				showToast = false;
-			}, 5000);
-		});
-	}
-
-	function handleEnhance() {
-		return async (args: { result: any}) => {
-			handleEnhanceResult(args.result);
+			await refreshFileList();
 		};
-	}
+	};
 
 	async function deleteFile(filename: string) {
 		const confirmDelete = confirm(`Are you sure you want to delete "${filename}"?`);
 		if (!confirmDelete) return;
 
-		const res = await fetch(`${base}/delete-file`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ month: selectedMonth, filename })
-		});
-
-		if (res.ok) {
-			const result = await res.json();
-			message = result.message || 'File deleted.';
-			isError = false;
-			refreshFileList();
-		} else {
-			message = 'Failed to delete file.';
-			isError = true;
-		}
-
-		showToast = true;
-		setTimeout(() => {
-			message = '';
-			showToast = false;
-		}, 5000);
+		await deleteFiles([filename]);
 	}
 
 	function handleDrop(event: DragEvent) {
 		isDragging = false;
-		if (!event.dataTransfer) return;
-		
+		if (isUploading || !event.dataTransfer) return;
+
 		const droppedFiles = event.dataTransfer.files;
 		const pdfs = Array.from(droppedFiles).filter((file: File) => file.type === 'application/pdf');
-
 
 		if (pdfs.length === 0) {
 			alert('Only PDF files are allowed.');
@@ -171,31 +153,30 @@
 	async function deleteSelectedFiles() {
 		const confirmDelete = confirm(`Delete ${selectedForDeletion.size} selected file(s)?`);
 		if (!confirmDelete) return;
+		await deleteFiles(Array.from(selectedForDeletion));
+	}
 
-		const filenames = Array.from(selectedForDeletion);
-
-		const res = await fetch(`${base}/delete-file`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ month: selectedMonth, filenames })
-		});
-
-		if (res.ok) {
-			const result = await res.json();
-			message = result.message || `Deleted ${filenames.length} file(s).`;
+	async function deleteFiles(filenames: string[]) {
+		if (isDeleting || isUploading || !selectedMonth) return;
+		isDeleting = true;
+		try {
+			const res = await fetch(`${base}/delete-file`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ month: selectedMonth, filenames })
+			});
+			const result = await res.json().catch(() => null);
+			if (!res.ok) throw new Error(result?.message || 'Unable to delete files.');
+			message = result?.message || 'Files deleted.';
 			isError = false;
-			selectedForDeletion = new Set();
-			refreshFileList();
-		} else {
-			message = 'Bulk delete failed.';
+		} catch (error) {
+			message = error instanceof Error ? error.message : 'Unable to delete files.';
 			isError = true;
+		} finally {
+			isDeleting = false;
+			showToast = true;
+			await refreshFileList();
 		}
-
-		showToast = true;
-		setTimeout(() => {
-			message = '';
-			showToast = false;
-		}, 5000);
 	}
 </script>
 
@@ -209,7 +190,7 @@
 	<form method="POST" enctype="multipart/form-data" use:enhance={handleEnhance}>
 		<label>
 			Select Month Folder:
-			<select name="month" bind:value={selectedMonth} required>
+			<select name="month" bind:value={selectedMonth} disabled={isUploading || isDeleting} required>
 				<option value="">Select a month</option>
 				{#each MONTHS as month}
 					<option value={month.slug}>{month.label}</option>
@@ -220,17 +201,25 @@
 		<div class="fileDetails">
 			<label>
 				Date for Filename:
-				<input type="date" name="fileDate" id="fileDate" required />
+				<input type="date" name="fileDate" id="fileDate" disabled={isUploading} required />
 			</label>
 
 			<label>
 				Start Number (e.g., 1):
-				<input type="number" name="startNumber" min="1" value="1" required id="startNumber" />
+				<input
+					type="number"
+					name="startNumber"
+					min="1"
+					value="1"
+					disabled={isUploading}
+					required
+					id="startNumber"
+				/>
 			</label>
 
 			<label>
 				<span>Index file</span>
-				<input type="checkbox" name="isIndex" bind:checked={isIndex} />
+				<input type="checkbox" name="isIndex" bind:checked={isIndex} disabled={isUploading} />
 			</label>
 		</div>
 		<!-- <label>
@@ -249,10 +238,11 @@
 			<p>Drag & drop PDF files here or click to browse</p>
 			<input
 				bind:this={fileInput}
+				disabled={isUploading}
 				type="file"
 				name="files"
 				accept="application/pdf"
-				multiple
+				multiple={!isIndex}
 				required
 				on:change={handleFileSelect}
 			/>
@@ -263,26 +253,38 @@
 				{#each selectedFiles as file, i}
 					<li>
 						<span>{file.name}</span>
-						<button type="button" on:click={() => removeFile(i)}>✖</button>
+						<button type="button" disabled={isUploading} on:click={() => removeFile(i)}>✖</button>
 					</li>
 				{/each}
 			</ul>
 		{/if}
 		<div class="button-group">
-			<button type="submit">Upload</button>
-			<button type="button" on:click={clearForm}>Clear</button>
+			<button type="submit" disabled={isUploading || isDeleting}
+				>{isUploading ? 'Uploading…' : 'Upload'}</button
+			>
+			<button type="button" disabled={isUploading} on:click={clearForm}>Clear</button>
 		</div>
 	</form>
 
 	{#if showToast}
-		<div class="toast" class:error={isError} class:success={!isError}>
+		<div
+			class="toast"
+			role={isError ? 'alert' : 'status'}
+			class:error={isError}
+			class:success={!isError}
+		>
 			{message}
 		</div>
 	{/if}
 
 	{#if selectedMonth}
 		<h2>Files in {getMonthLabel(selectedMonth)}:</h2>
-		{#if files.length > 0}
+		{#if fileListError}
+			<p role="alert">{fileListError}</p>
+			<button on:click={() => refreshFileList()}>Try again</button>
+		{:else if isLoadingFiles}
+			<p>Loading files…</p>
+		{:else if files.length > 0}
 			<ul class="file-grid">
 				{#each files as file}
 					<li>
@@ -312,6 +314,7 @@
 							<button
 								class="delete-button"
 								type="button"
+								disabled={isDeleting || isUploading}
 								on:click|stopPropagation={() => deleteFile(file)}
 								aria-label={`Delete ${file}`}
 							>
@@ -324,7 +327,7 @@
 
 			{#if selectedForDeletion.size > 0}
 				<div class="bulk-delete-bar">
-					<button on:click={deleteSelectedFiles}
+					<button disabled={isDeleting || isUploading} on:click={deleteSelectedFiles}
 						>Delete Selected ({selectedForDeletion.size})</button
 					>
 					<button on:click={clearSelectedFiles}>Cancel</button>
