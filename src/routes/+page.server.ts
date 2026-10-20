@@ -1,12 +1,8 @@
 import type { PageServerLoad } from './$types';
 import { base } from '$app/paths';
 
-export const load: PageServerLoad = async ({ fetch, locals }) => {
+export const load: PageServerLoad = async ({ fetch }) => {
 	const res = await fetch(`${base}/api/sales`);
 	const sales = await res.json();
-	const username = locals.user?.username ?? null;
-
-	console.info(`[auth-test] /trustee user: ${username ?? 'none'}`);
-
-	return { sales, user: locals.user };
+	return { sales };
 };

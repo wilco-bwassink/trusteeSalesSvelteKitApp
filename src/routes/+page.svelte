@@ -9,17 +9,12 @@
 	// Get `data.sales` from load()
 	export let data: {
 		sales?: SaleRecord[];
-		user?: { username: string; authMethod: 'windows' | 'password' | 'development' } | null;
 	} = {
-		sales: [],
-		user: null
+		sales: []
 	};
 
 	// Use the passed-in sales list
 	let sales = data.sales ?? [];
-	let authStatus = data.user?.username
-		? `Logged in as ${data.user.username}`
-		: 'Not signed in';
 	function getSaleMonthSlug(sale: SaleRecord) {
 		return sale.monthSlug ?? normalizeMonthSlug(sale.month) ?? '';
 	}
@@ -29,13 +24,6 @@
 </script>
 
 <div id="container">
-	<div class:authenticated={data.user?.username} class="auth-debug">
-		Authentication: {authStatus}
-		{#if !data.user}
-			— <a href={`${base}/login`}>Staff sign in</a>
-		{/if}
-	</div>
-
 	<p class="trusteeSalesInfo">
 		Trustee sales are held on the first Tuesday of every month outside the northeast lower level
 		door of the Williamson County Justice Center at 405 MLK Street, Georgetown, Texas.
@@ -59,7 +47,7 @@
 				</div>
 				<div class="date">{sale.date}</div>
 				{#if sale.showMap && sale.mapUrl}
-					<a class="mapLink" href={`${base}/map/${getSaleMonthSlug(sale)}`}>See the {sale.month} Map</a>
+					<a class="mapLink" href={`${base}/map/${getSaleMonthSlug(sale)}`}
 						>See the {sale.month} Map</a
 					>
 				{:else}
@@ -96,21 +84,6 @@
 
 	h1 {
 		text-align: center;
-	}
-
-	.auth-debug {
-		margin: 1rem 0;
-		padding: 0.5rem 0.75rem;
-		border: 1px solid #9f1239;
-		background: #fff1f2;
-		color: #881337;
-		font-weight: 700;
-	}
-
-	.auth-debug.authenticated {
-		border-color: #166534;
-		background: #f0fdf4;
-		color: #14532d;
 	}
 
 	.monthAndMap {

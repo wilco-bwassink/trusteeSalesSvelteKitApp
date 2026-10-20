@@ -33,14 +33,15 @@ TRUSTEE_FILE_STORAGE_DIR=C:/data/trustee-sales
 
 ## IIS authentication
 
-Protected routes such as `/trustee/upload` rely on IIS Windows Authentication. The app expects IIS URL Rewrite to pass the authenticated Windows account through the `X-Windows-User` request header.
+Staff go directly to `/trustee/upload` or `/trustee/admin`, where IIS handles Windows Authentication. The public sales pages remain anonymous. The legacy `/trustee/login` URL redirects to a protected staff page.
 
 On the IIS site or application that owns the `/trustee` rewrite rules:
 
-- Disable Anonymous Authentication.
-- Enable Windows Authentication.
-- In URL Rewrite, add `HTTP_X_WINDOWS_USER` to the allowed server variables list.
+- Keep the route-specific Windows Authentication and authorization rules in `web.config`.
+- Keep the Node server bound to `127.0.0.1` so protected requests must pass through IIS.
 - Keep the rewrite target port in `web.config` aligned with the PM2 `PORT` in `ecosystem.config.cjs`.
+
+The app trusts IIS to authenticate protected requests; it does not require an `X-Windows-User` header or the `TRUSTEE_ADMIN_*` password settings. Local development on localhost uses a development identity. Protected writes also require a matching `Origin` header.
 
 ## Building
 
